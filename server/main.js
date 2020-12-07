@@ -1,6 +1,8 @@
 const http = require('http')
-const { userInfo } = require('os')
+const web_handler = require('./handler/web_handler')
 const port = 1920
+
+// const mysql = require('mysql')
 
 const server = http
    .createServer((req, res) => {
@@ -21,10 +23,10 @@ const server = http
             res.end('hallo app')
             break;
          default:
-            
-            res.end("hallo browser")
+            web_handler.webHandler(req, res)
             break;
       }
    }).listen(port, () => {
       console.log(`Server listening at port ${port}`)
    })
+
