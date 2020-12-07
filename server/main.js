@@ -1,6 +1,7 @@
 const http = require('http')
+const port = 1920
 
-const server = http.createServer(handleRequest).listen(1920, () => {
+const server = http.createServer(handleRequest).listen(port, () => {
    console.log(`Server listening at port ${port}`)
 })
 

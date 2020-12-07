@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "nodemon main.js",
-    "get": "node get.js"
+    "testget": "node testget.js"
   },
   "author": "simon",
   "license": "ISC",
