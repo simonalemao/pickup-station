@@ -1,8 +1,10 @@
 const http = require('http')
 
-const port = 1920
+const server = http.createServer(handleRequest).listen(1920, () => {
+   console.log(`Server listening at port ${port}`)
+})
 
-const server = http.createServer((req, res) => {
+function handleRequest(req, res) {
    let data = '';
 
    console.log(req.headers);
@@ -19,8 +21,4 @@ const server = http.createServer((req, res) => {
    res.setHeader('Content-Type', 'text/html')
    res.setHeader('X-test-header', 'works')
    res.end('<h2>Hello, World</h2>')
-})
-
-server.listen(port, () => {
-   console.log(`Server running at port ${port}`)
-})
+}
