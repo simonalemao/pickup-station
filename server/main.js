@@ -1,25 +1,30 @@
 const http = require('http')
+const { userInfo } = require('os')
 const port = 1920
 
-const server = http.createServer(handleRequest).listen(port, () => {
-   console.log(`Server listening at port ${port}`)
-})
+const server = http
+   .createServer((req, res) => {
+      console.log('Requesting: ')
+      console.log(req.url)
+      console.log("...\n");
 
-function handleRequest(req, res) {
-   let data = '';
+      var userAgent = req.headers["user-agent"]
 
-   console.log(req.headers);
+      console.log("User-Agent:")
+      console.log(userAgent)
 
-   req.on('data', (chunk) => {
-      console.log(`Data chunk: ${chunk}`);
-      data += chunk;
-      console.log(data);
+      switch (userAgent) {
+         case 'pickup-station':
+            res.end('hallo pickup-station')
+            break;
+         case 'app':
+            res.end('hallo app')
+            break;
+         default:
+            
+            res.end("hallo browser")
+            break;
+      }
+   }).listen(port, () => {
+      console.log(`Server listening at port ${port}`)
    })
-
-   req.on('end', () => {
-   })
-
-   res.setHeader('Content-Type', 'text/html')
-   res.setHeader('X-test-header', 'works')
-   res.end('<h2>Hello, World</h2>')
-}

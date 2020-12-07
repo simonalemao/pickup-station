@@ -3,7 +3,7 @@ const http = require('http')
 const options = {
    hostname: 'localhost',
    port: 1920,
-   path: '/test/test/test',
+   // path: 'index.html',
    headers: {
       'user-agent': 'pickup-station'
    }
