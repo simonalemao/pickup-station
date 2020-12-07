@@ -1,0 +1,19 @@
+{
+  "name": "pickup-station-server",
+  "version": "0.1.0",
+  "description": "Das Backend für das Projekt Pickup-Station",
+  "main": "main.js",
+  "scripts": {
+    "start": "nodemon main.js",
+    "get": "node get.js"
+  },
+  "author": "simon",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simonalemao/pickup-station"
+  },
+  "dependencies": {
+    "nodemon": "^2.0.6"
+  }
+}
