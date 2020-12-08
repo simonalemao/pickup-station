@@ -1,29 +1,28 @@
 const http = require('http')
+// const urlToolbox = require('url')
+
 const web_handler = require('./handler/web_handler')
+const app_handler = require('./handler/app_handler')
+const station_handler = require('./handler/station_handler')
+
 const port = 1920
 
 // const mysql = require('mysql')
 
 const server = http
    .createServer((req, res) => {
-      console.log('Requesting: ')
-      console.log(req.url)
-      console.log("...\n");
-
-      var userAgent = req.headers["user-agent"]
-
-      console.log("User-Agent:")
-      console.log(userAgent)
-
-      switch (userAgent) {
+      switch (req.headers["x-user"]) {
          case 'pickup-station':
-            res.end('hallo pickup-station')
+            console.log("pickup");
+            station_handler.stationHandler(req, res);
             break;
          case 'app':
-            res.end('hallo app')
+            console.log("app");
+            app_handler.appHandler(req, res);
             break;
          default:
-            web_handler.webHandler(req, res)
+            console.log('web');
+            web_handler.webHandler(req, res);
             break;
       }
    }).listen(port, () => {
