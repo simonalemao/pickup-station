@@ -11,13 +11,13 @@ module.exports = {
     */
    webHandler: function (req, res) {
       var url = req.url;
-      switch (url) {
-         case "/":
-            url += "index.html";
-            break;
-         default:
-            break;
+      if (url === "/") {
+         url += "index.html";
+      } else if (url.indexOf(".") == -1) {
+         url += "/index.html";
       }
+
+      console.log(url);
 
       var ending = `${url}`.split(".");
 
