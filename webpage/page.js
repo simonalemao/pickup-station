@@ -4,8 +4,5 @@ async function testFunction() {
          "x-user": "app"
       }
    });
-
-   const response = await fet.text();
-
-   document.getElementById("theDiv").innerHTML = response;
+   document.getElementById("theDiv").innerHTML = JSON.stringify(await fet.json());
 }
