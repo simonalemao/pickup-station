@@ -11,19 +11,18 @@ const port = 1920
 
 const server = http
    .createServer((req, res) => {
-      var userAgent = req.headers["user-agent"]
-
-      console.log("User-Agent:", userAgent.slice(0, 60), '\n')
-
-      switch (userAgent) {
+      switch (req.headers["x-user"]) {
          case 'pickup-station':
-            res.end('hallo pickup-station')
+            console.log("pickup");
+            station_handler.stationHandler(req, res);
             break;
          case 'app':
-            res.end('hallo app')
+            console.log("app");
+            app_handler.appHandler(req, res);
             break;
          default:
-            web_handler.webHandler(req.url, res)
+            console.log('web');
+            web_handler.webHandler(req, res);
             break;
       }
    }).listen(port, () => {
