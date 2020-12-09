@@ -9,9 +9,9 @@ module.exports = {
     * @param {http.IncomingMessage} req 
     * @param {http.ServerResponse} res 
     */
-   webHandler: function (req, res) {
+   webHandler: (req, res) => {
       var url = req.url;
-      if (url === "/") {
+      if (url == "/") {
          url += "index.html";
       } else if (url.indexOf(".") == -1) {
          url += "/index.html";
@@ -21,17 +21,15 @@ module.exports = {
 
       var ending = `${url}`.split(".");
 
-      if (ending.length = 2) {
-         switch (ending[1]) {
-            case "html":
-               res.setHeader("Content-Type", "text/html");
-               break;
-            case "js":
-               res.setHeader("Content-Type", "application/javascript");
-               break;
-            default:
-               break;
-         }
+      switch (ending[1]) {
+         case "html":
+            res.setHeader("Content-Type", "text/html");
+            break;
+         case "js":
+            res.setHeader("Content-Type", "application/javascript");
+            break;
+         default:
+            break;
       }
 
       fs.readFile((`../webpage${url}`), (err, data) => {
@@ -41,6 +39,6 @@ module.exports = {
          } else {
             res.end(data);
          }
-      })
+      });
    }
 }

@@ -8,7 +8,7 @@ module.exports = {
     * @param {http.IncomingMessage} req 
     * @param {http.ServerResponse} res 
     */
-   appHandler: function (req, res) {
+   stationHandler: (req, res) => {
       res.end('hallo pickup-station');
    }
 }

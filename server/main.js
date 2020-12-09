@@ -1,11 +1,12 @@
 const http = require('http')
-// const urlToolbox = require('url')
+const path = require('path')
 
 const web_handler = require('./handler/web_handler')
 const app_handler = require('./handler/app_handler')
 const station_handler = require('./handler/station_handler')
 
 const port = 1920
+const __rootname = __dirname
 
 // const mysql = require('mysql')
 
@@ -28,4 +29,3 @@ const server = http
    }).listen(port, () => {
       console.log(`Server listening at port ${port}`)
    })
-

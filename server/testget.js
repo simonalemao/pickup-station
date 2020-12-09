@@ -5,7 +5,7 @@ const options = {
    port: 1920,
    // path: 'index.html',
    headers: {
-      'user-agent': 'pickup-station'
+      'x-user': 'pickup-station'
    }
 }
 
