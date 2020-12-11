@@ -1,6 +1,4 @@
 const http = require('http')
-const path = require('path')
-
 const web_handler = require('./handler/web_handler')
 const app_handler = require('./handler/app_handler')
 const station_handler = require('./handler/station_handler')

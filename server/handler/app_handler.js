@@ -33,10 +33,16 @@ module.exports = {
                   break;
             }
             res.end(JSON.stringify(resJSON));
+            break;
          case 'POST':
-            req.on() ('data', (chunk) => {
+            req.on('data', (chunk) => {
+               // chunks += chunk;
                console.log(`Received ${chunk.length} bytes of data.`);
             })
+            // console.log("end", util.inspect(chunks));
+            // req.on("end", () => {
+            //    res.end();
+            // })
             console.log(req.headers);
             console.log(req.method);
             res.end();

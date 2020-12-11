@@ -34,6 +34,8 @@ module.exports = {
 
       fs.readFile((`../webpage${url}`), (err, data) => {
          if (err) {
+            console.error(`E: 404: ../webpage${url}` );
+            console.error(`E: ${err}` );
             res.statusCode = 404;
             res.end();
          } else {

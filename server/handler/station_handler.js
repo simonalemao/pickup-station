@@ -9,6 +9,7 @@ module.exports = {
     * @param {http.ServerResponse} res 
     */
    stationHandler: (req, res) => {
+      res.statusCode = 200
       res.end('hallo pickup-station');
    }
 }
