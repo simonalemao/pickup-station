@@ -1,20 +1,29 @@
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+req = new Request("pickup-station.fh-wedel.de");
 
-const https = require('https');
+console.log("Headers:\n", req.headers);
+console.log("Boby:\n", req.body);
 
-https.get('https://pickup-station.stec.fh-wedel.de/', {
-   rejectUnauthorized: "false"
-}, (res) => {
-   console.log('statusCode:', res.statusCode);
-   console.log('headers:', res.headers);
+// ------------------------------------------------------------
 
-   res.on('data', (d) => {
-      process.stdout.write(d);
-   });
+// process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-}).on('error', (e) => {
-   console.error("E: ", e);
-});
+// const https = require('https');
+
+// https.get('https://wiki.stec.fh-wedel.de/', {
+//    // rejectUnauthorized: "false"
+// }, (res) => {
+//    console.log('statusCode:', res.statusCode);
+//    console.log('headers:', res.headers);
+
+//    res.on('data', (d) => {
+//       process.stdout.write(d);
+//    });
+
+// }).on('error', (e) => {
+//    console.error("E: ", e);
+// });
+
+// ------------------------------------------------------------- 
 
 // const http = require('http')
 

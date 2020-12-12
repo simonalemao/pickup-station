@@ -1,4 +1,5 @@
 const http = require('http')
+
 const web_handler = require('./handler/web_handler')
 const app_handler = require('./handler/app_handler')
 const station_handler = require('./handler/station_handler')
@@ -10,6 +11,8 @@ const __rootname = __dirname
 
 const server = http
    .createServer((req, res) => {
+      console.log("neue anfrage")
+      res.setHeader("Access-Control-Allow-Origin", "*")
       switch (req.headers["x-user"]) {
          case 'pickup-station':
             console.log("pickup");
