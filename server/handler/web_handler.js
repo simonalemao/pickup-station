@@ -1,6 +1,8 @@
 const fs = require('fs');
 const http = require('http');
 
+const web_folder = "../webapp";
+
 module.exports = {
 
    /**
@@ -32,9 +34,9 @@ module.exports = {
             break;
       }
 
-      fs.readFile((`../webpage${url}`), (err, data) => {
+      fs.readFile((`${web_folder}${url}`), (err, data) => {
          if (err) {
-            console.error(`E: 404: ../webpage${url}` );
+            console.error(`E: 404: ${web_folder}${url}` );
             console.error(`E: ${err}` );
             res.statusCode = 404;
             res.end();
