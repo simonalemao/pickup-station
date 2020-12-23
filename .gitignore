@@ -1,4 +1,4 @@
-server/node_modules/*
 *.code-workspace
-webapp/mode_modules/*
+webapp/node_modules
+webapp/.nuxt
 .vscode/*
