@@ -1,9 +1,12 @@
 // const http = require('http')
 
-const web_handler = require('./handler/web_handler')
-const app_handler = require('./handler/app_handler')
-const station_handler = require('./handler/station_handler')
+const web_handler = require('./handler/web_handler');
+const app_handler = require('./handler/app_handler');
+const station_handler = require('./handler/station_handler');
 
+import arp from '@network-utils/arp-lookup';
+
+{
 // const port = 1920
 // const __rootname = __dirname
 
@@ -30,11 +33,12 @@ const station_handler = require('./handler/station_handler')
 //    }).listen(port, () => {
 //       console.log(`Server listening at port ${port}`)
 //    })
+}
 
-
-export default function (req, res) {
+export default async function (req, res) {
    console.log("neue anfrage")
    console.log(req.url)
+   console.log(await arp.getTable());
    res.setHeader("Access-Control-Allow-Origin", "*")
    switch (req.headers["x-user"]) {
       case 'pickup-station':
