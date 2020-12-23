@@ -1,2 +1,3 @@
 server/node_modules/*
 *.code-workspace
+webapp/mode_modules/*
