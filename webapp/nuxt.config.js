@@ -12,6 +12,10 @@ export default {
     ]
   },
 
+  serverMiddleware: {
+    '/backend': '~/../server/main.js'
+  },
+
   // Global CSS (https://go.nuxtjs.dev/config-css)
   css: [
   ],
