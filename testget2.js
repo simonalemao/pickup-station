@@ -1,12 +1,12 @@
 const http = require('http')
 
 const options = {
-   hostname: 'localhost',
-   port: 1920,
+   hostname: '172.30.0.252',
+   port: 80,
    // path: 'index.html',
-   headers: {
-      'x-user': 'pickup-station'
-   }
+   // headers: {
+   //    'x-user': 'pickup-station'
+   // }
 }
 
 const req = http.get(options, (res) => {
