@@ -1,7 +1,6 @@
 import { runInNewContext } from 'vm';
 
 const { get } = require('http');
-const { Daten } = require('./Daten.js');
 const { execSync } = require('child_process');
 
 export class Arduino {
@@ -16,8 +15,8 @@ export class Arduino {
    async getStatus() {
       var result = "";
 
-      return new Promise((success, reject) => {
-         var req = get(`http://www.google.de`, (incMes) => {
+      var prom = new Promise((success, reject) => {
+         var req = get(`http://${this.#arduIP}`, (incMes) => {
             incMes.on("data", (chunk) => {
                result += chunk;
             })
@@ -31,6 +30,10 @@ export class Arduino {
             reject(err);
          });
       });
+
+      
+
+      return prom;
    }
 
    #getArduIp() {
@@ -47,10 +50,9 @@ export class Arduino {
       lines.forEach(line => {
          if (line.indexOf(this.#arduMAC) > 0) {
             arduIp = line.substring(line.indexOf("(") + 1, line.indexOf(")"));
-            console.log(arduIp);
          }
       });
 
-      return '192.168.0.100';
+      return arduIp;
    }
 }
