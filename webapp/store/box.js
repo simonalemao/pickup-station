@@ -42,30 +42,15 @@ export const actions = {
     if (getters.boxes.length) {
       return
     }
-    await this.$axios.$get('https://icanhazip.com')
+    var res = await this.$axios.$get('/backend/?f=getbelegte')
 
-    commit('addBox', {
-      id: 1,
-      title: 'Testtitel',
-      description: 'Beschreibung',
-      size: 'L',
-      created_at: '14.12.20',
-      last_opened_at: '15.12.20',
-      state: 1
-    })
-    commit('addBox', {
-      id: 2,
-      title: 'Testbox',
-      description: '',
-      size: 'L',
-      created_at: '14.12.20',
-      last_opened_at: '15.12.20',
-      state: 1
-    })
+    res.forEach(box => {
+      commit('addBox', box)
+    });
   },
   async refreshBox ({ commit, getters }, { boxId }) {
-    await this.$axios.$get('https://icanhazip.com')
-
+    await this.$axios.$get(`/backend/?f=open_or_is_closed&id=${boxId}`)
+    
     return new Box({
       id: boxId,
       title: 'Testtitel',
@@ -73,7 +58,7 @@ export const actions = {
       size: 'L',
       created_at: '14.12.20',
       last_opened_at: '15.12.20',
-      state: Math.round(Math.random())
+      state: 1
     })
   },
   async deleteBox ({ commit }, { boxId }) {
