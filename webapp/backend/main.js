@@ -18,9 +18,7 @@ export default async function (req, res) {
       // Keine gültige URL für Backend, weil keine query
       redirectToHomepage(res);
 
-   } else if (Object.keys
-      ((query = querystring.parse(req.url.substr(req.url.indexOf('?') + 1))))
-      .length < 1) {
+   } else if (Object.keys((query = getQueryPairs(req.url))).length < 1) {
       // Query enthält kein Element
       redirectToHomepage(res);
 
@@ -28,20 +26,26 @@ export default async function (req, res) {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
 
-      // Query verarbeiten
       switch (query['f']) {
-         case "getbelegte":
+         case "get_belegte":
             res.end(daten.getBelegteBoxen());
             break;
-         case "open_or_is_closed":
+         case "arduino":
             arduino.getStatus().then(mes => {
-               console.log(mes.substr(0, 100))
-               res.end(mes.substr(0, 100));
+               res.end(mes);
             }).catch(err => {
                console.log(err);
-               res.end(JSON.stringify(err));
+               res.end("Meehh");
             });
-            // arduino.open(query['id']);
+            break;
+         case "open":
+         case "is_closed":
+         case "delete":
+         case "get_av_sizes":
+         case "request_and_open":
+         case "update":
+            console.log(query);
+            res.end();
             break;
          default:
             console.log(query['f']);
@@ -56,7 +60,11 @@ export default async function (req, res) {
 }
 
 function redirectToHomepage(res) {
-   // res.statusCode = 307;
-   // res.setHeader("Location", "https://pickup-station.stec.fh-wedel.de/");
+   res.statusCode = 307;
+   res.setHeader("Location", "https://pickup-station.stec.fh-wedel.de/");
    res.end();
+}
+
+function getQueryPairs(url) {
+   return querystring.parse(url.substr(url.indexOf('?') + 1));
 }

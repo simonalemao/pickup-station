@@ -48,7 +48,8 @@ export default {
   async asyncData ({ store, route }) {
     await store.dispatch('box/fetchBoxes')
 
-    // TODO: send API request that the box needs to be opened
+    await store.dispatch('box/open', route.params.id)
+
     store.commit('box/updateState', {
       boxId: route.params.id,
       newState: 0

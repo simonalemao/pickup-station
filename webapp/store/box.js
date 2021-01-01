@@ -38,18 +38,21 @@ export const getters = {
 }
 
 export const actions = {
+  async open ({ commit }, boxId) {
+    await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=open&id=${boxId}`)
+  },
   async fetchBoxes ({ commit, getters }) {
     if (getters.boxes.length) {
       return
     }
-    var res = await this.$axios.$get('/backend/?f=getbelegte')
+    var res = await this.$axios.$get('/backend?f=get_belegte')
 
     res.forEach(box => {
       commit('addBox', box)
     });
   },
   async refreshBox ({ commit, getters }, { boxId }) {
-    await this.$axios.$get(`/backend/?f=open_or_is_closed&id=${boxId}`)
+    await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=is_closed&id=${boxId}`)
     
     return new Box({
       id: boxId,
@@ -62,13 +65,10 @@ export const actions = {
     })
   },
   async deleteBox ({ commit }, { boxId }) {
-    // TODO: send delete request to api
-
-    await this.$axios.$get('https://icanhazip.com')
+    await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=delete&id=${boxId}`)
   },
   async getAvailableSizes ({ commit }) {
-    // TODO: send api request
-    await this.$axios.$get('https://icanhazip.com')
+    await this.$axios.$get('https://pickup-station.stec.fh-wedel.de/backend?f=get_av_sizes')
 
     commit('setAvailableSizes', {
       L: true,
@@ -77,8 +77,9 @@ export const actions = {
     })
   },
   async requestNewBox ({ commit }, { size }) {
-    // TODO: send api request
-    await this.$axios.$get('https://icanhazip.com')
+    var box = this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=request_and_open&size=${size}`)
+
+    // console.log(box);
 
     return new Box({
       id: 5,
@@ -91,7 +92,8 @@ export const actions = {
     })
   },
   async updateBox ({ commit }, payload) {
-    // TODO: send api request
-    return await this.$axios.$get('https://icanhazip.com')
+    console.log(commit);
+    console.log(payload);
+    await this.$axios.$post(`https://pickup-station.stec.fh-wedel.de/backend?f=update`, payload)
   }
 }
