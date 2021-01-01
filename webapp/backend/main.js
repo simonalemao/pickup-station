@@ -1,57 +1,62 @@
-// const http = require('http')
+const http = require('http');
+const querystring = require('querystring');
 
-const web_handler = require('./handler/web_handler');
-const app_handler = require('./handler/app_handler');
-const station_handler = require('./handler/station_handler');
+const daten = new (require('./modules/Daten.js').Daten)('daten.json');
+const arduino = new (require('./modules/Arduino.js').Arduino)();
 
-import arp from '@network-utils/arp-lookup';
+/**
+ * 
+ * @param {http.IncomingMessage} req Request
+ * @param {http.ServerResponse} res Response
+ */
+export default async function (req, res) {
+   'use strict';
 
-{
-// const port = 1920
-// const __rootname = __dirname
+   var query;
 
-// const mysql = require('mysql')
+   if (req.url.indexOf('?') < 0) {
+      // Keine gültige URL für Backend, weil keine query
+      redirectToHomepage(res);
 
-// const server = http
-//    .createServer((req, res) => {
-//       console.log("neue anfrage")
-//       res.setHeader("Access-Control-Allow-Origin", "*")
-//       switch (req.headers["x-user"]) {
-//          case 'pickup-station':
-//             console.log("pickup");
-//             station_handler.stationHandler(req, res);
-//             break;
-//          case 'app':
-//             console.log("app");
-//             app_handler.appHandler(req, res);
-//             break;
-//          default:
-//             console.log('web');
-//             web_handler.webHandler(req, res);
-//             break;
-//       }
-//    }).listen(port, () => {
-//       console.log(`Server listening at port ${port}`)
-//    })
+   } else if (Object.keys
+      ((query = querystring.parse(req.url.substr(req.url.indexOf('?') + 1))))
+      .length < 1) {
+      // Query enthält kein Element
+      redirectToHomepage(res);
+
+   } else {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+
+      // Query verarbeiten
+      switch (query['f']) {
+         case "getbelegte":
+            res.end(daten.getBelegteBoxen());
+            break;
+         case "open_or_is_closed":
+            arduino.getStatus().then(mes => {
+               console.log(mes.substr(0, 100))
+               res.end(mes.substr(0, 100));
+            }).catch(err => {
+               console.log(err);
+               res.end(JSON.stringify(err));
+            });
+            // arduino.open(query['id']);
+            break;
+         default:
+            console.log(query['f']);
+            res.end();
+            break;
+      }
+
+
+      // var arduIp = getArduIp();
+      // console.log(`Arduino IP: ${arduIp == null ? "unbekannt" : arduIp}`);
+   }
 }
 
-export default async function (req, res) {
-   console.log("neue anfrage")
-   console.log(req.url)
-   console.log(await arp.getTable());
-   res.setHeader("Access-Control-Allow-Origin", "*")
-   switch (req.headers["x-user"]) {
-      case 'pickup-station':
-         console.log("pickup");
-         station_handler.stationHandler(req, res);
-         break;
-      case 'app':
-         console.log("app");
-         app_handler.appHandler(req, res);
-         break;
-      default:
-         console.log('web');
-         web_handler.webHandler(req, res);
-         break;
-   }
-} 
+function redirectToHomepage(res) {
+   // res.statusCode = 307;
+   // res.setHeader("Location", "https://pickup-station.stec.fh-wedel.de/");
+   res.end();
+}
