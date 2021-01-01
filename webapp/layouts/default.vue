@@ -3,7 +3,7 @@
     <header class="container z-10 flex justify-between py-2 bg-white shadow-lg">
       <nuxt-link to="/">
         <p class="text-xl">
-          Smart Pickup
+          Pickup Station
         </p>
       </nuxt-link>
 

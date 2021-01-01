@@ -111,7 +111,7 @@ export default {
       if (newBox.isLocked() && oldBox.isOpen()) {
         setTimeout(() => {
           this.boxIsLocked = true
-        }, 5000)
+        }, 3000)
         clearInterval(this.interval)
       }
     }
@@ -134,6 +134,7 @@ export default {
     },
     async save () {
       await this.$store.dispatch('box/updateBox', {
+        boxId:  this.box.getId(),
         title: this.title,
         description: this.description
       })
