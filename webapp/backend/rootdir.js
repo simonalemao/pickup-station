@@ -1,1 +1,1 @@
-module.exports.rootdir = __dirname
+module.exports.rootdir = "/var/www/www-pickup-station";
