@@ -2,3 +2,5 @@
 webapp/node_modules
 webapp/.nuxt
 .vscode/*
+arduino.json
+daten.json
