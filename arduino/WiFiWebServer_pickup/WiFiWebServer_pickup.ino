@@ -6,6 +6,7 @@
 
 #include <SPI.h>
 #include <WiFiNINA.h>
+#include <stdio.h>
 
 #include "arduino_secrets.h"
 
@@ -16,13 +17,12 @@ char pass[] = SECRET_PASS;
 long time = 0;
 byte mac[6];
 bool serial_verbunden = 0;
-const long restart_time = 60000;
+const long restart_time = 3600000;
 
 // Server hört Port 80
 WiFiServer server(80);
 
-void setup()
-{
+void setup() {
   // Pin für "LED-Output"
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -31,8 +31,7 @@ void setup()
 
   // 6 Sekunden auf serielles Terminal warten
   time = millis() + 6000;
-  while (!Serial && (time > millis()))
-  {
+  while (!Serial && (time > millis())) {
     delay(500);
     digitalWrite(LED_BUILTIN, HIGH);
     delay(500);
@@ -43,12 +42,10 @@ void setup()
   serial_verbunden = Serial;
 
   // WiFi Modul prüfen (Keine Versionsprüfung)
-  if (WiFi.status() == WL_NO_MODULE)
-  {
+  if (WiFi.status() == WL_NO_MODULE) {
     Serial.println("Communication with WiFi module failed!");
     // Nicht fortfahren. Schnelles blinken symbolisiert Fehler
-    while (true)
-    {
+    while (true) {
       delay(200);
       digitalWrite(LED_BUILTIN, HIGH);
       delay(200);
@@ -56,8 +53,8 @@ void setup()
     };
   }
 
-  // MAC-Adresse ausgeben
-  {
+
+  { // MAC-Adresse ausgeben
     WiFi.macAddress(mac);
     Serial.print("MAC: ");
     Serial.print(mac[5], HEX);
@@ -77,24 +74,20 @@ void setup()
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
-void loop()
-{
+void loop() {
   // Verbindung zu WLAN herstellen
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     Serial.print("Verbinden mit WLAN. SSID: ");
     Serial.println(ssid);
 
     WiFi.begin(ssid, pass);
 
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      // 20 Sekunden auf WLAN warten.
-      delay(20000);
+    if (WiFi.status() != WL_CONNECTED) {
+      // 60 Sekunden auf WLAN warten.
+      delay(60000);
     }
-    else
-    {
-    // 1 Sekunde für stabile Verbindung
+    else {
+      // 1 Sekunde für stabile Verbindung
       delay(1000);
     }
   }
@@ -110,39 +103,31 @@ void loop()
 
   // Nach einiger Zeit Server neustarten und WLAN-Verbindung erneut herstellen
   time = millis() + restart_time;
-  while (WiFi.status() == WL_CONNECTED && (time > millis()))
-  {
+  while (WiFi.status() == WL_CONNECTED && (time > millis())) {
     WiFiClient client = server.available();
-    if (client)
-    {
+    if (client) {
       digitalWrite(LED_BUILTIN, HIGH);
       Serial.println("new client");
       // an http request ends with a blank line
       boolean currentLineIsBlank = true;
-      while (client.connected())
-      {
-        if (client.available())
-        {
+      while (client.connected()) {
+        if (client.available()) {
           char c = client.read();
 
-          if (serial_verbunden)
-          {
+          if (serial_verbunden) {
             Serial.write(c);
           }
           // if you've gotten to the end of the line (received a newline
           // character) and the line is blank, the http request has ended,
           // so you can send a reply
-          if (c == '\n' && currentLineIsBlank)
-          {
-            if (0)
-            {
+          if (c == '\n' && currentLineIsBlank) {
+            if (0) {
               client.println("HTTP/1.1 301 Moved Permanently");
               client.println("Location: https://pickup-station.stec.fh-wedel.de/");
               client.println();
             }
 
-            if (1)
-            {
+            if (1) {
               client.println("HTTP/1.1 200 OK");
               client.println("Content-Type: text/html");
               client.println("Connection: close"); // the connection will be closed after completion of the response
@@ -151,10 +136,9 @@ void loop()
               client.println("<!DOCTYPE HTML>");
               client.println("<html>");
               client.println(millis());
-              if (0) // Ausgabe der Werte analoger Pins deaktivieren
-              {      // output the value of each analog input pin
-                for (int analogChannel = 0; analogChannel < 6; analogChannel++)
-                {
+              if (0) { // Ausgabe der Werte analoger Pins deaktivieren
+                    // output the value of each analog input pin
+                for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
                   int sensorReading = analogRead(analogChannel);
                   client.print("analog input ");
                   client.print(analogChannel);
@@ -167,13 +151,11 @@ void loop()
             }
             break;
           }
-          if (c == '\n')
-          {
+          if (c == '\n') {
             // you're starting a new line
             currentLineIsBlank = true;
           }
-          else if (c != '\r')
-          {
+          else if (c != '\r') {
             // you've gotten a character on the current line
             currentLineIsBlank = false;
           }
@@ -202,8 +184,7 @@ void loop()
   time = millis() + restart_time;
 }
 
-void printWifiStatus()
-{
+void printWifiStatus() {
   Serial.println("----------------------------------");
 
   // SSID ausgeben
