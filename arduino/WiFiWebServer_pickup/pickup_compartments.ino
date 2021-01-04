@@ -42,15 +42,7 @@ void setupCompartments() {
   delay(100);
 }
 
-void setup() {
-  Serial.begin(9600);
 
-  delay(100);
-
-  setupCompartments();
-
-  delay(100);
-}
 
 /**
  opens the door of the given compartment
@@ -93,10 +85,3 @@ void check() {
   }
 }
 
-void loop() {
-
-  check();
-  openDoor(0);
-  delay(5000);
-  // Testing the first 8 servo channels
-}
