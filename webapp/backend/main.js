@@ -1,8 +1,7 @@
 const http = require('http');
 const querystring = require('querystring');
 
-const daten = new (require('./modules/Daten.js').Daten)('daten.json');
-const arduino = new (require('./modules/Arduino.js').Arduino)();
+const daten = new (require('./modules/Daten.js').Daten)();
 
 /**
  * 
@@ -27,19 +26,19 @@ export default async function (req, res) {
       res.setHeader('Content-Type', 'application/json');
 
       switch (query['f']) {
-         case "get_belegte":
+         case "arduino":
+            var x = await daten.arduino();
+            console.log("ardu:\n" + x);
+            res.end(x);
+            break;
+         case "get_occupied":
             res.end(daten.getBelegteBoxen());
             break;
-         case "arduino":
-            arduino.getStatus().then(mes => {
-               res.end(mes);
-            }).catch(err => {
-               console.log(err);
-               res.end("Meehh");
-            });
-            break;
          case "open":
-         case "is_closed":
+            await daten.open(query["id"]);
+            res.end()
+         case "get_box":
+            res.end(await daten.getBox(query["id"]));
          case "delete":
          case "get_av_sizes":
          case "request_and_open":
