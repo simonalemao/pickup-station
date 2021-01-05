@@ -1,8 +1,7 @@
-/*
-  WiFi Server für den Arduino der Pickup-Station
+// WiFi Server für den Arduino der Pickup-Station
 
-  Simon Schröder (stec103616)
-*/
+// Simon Schröder (stec103616)
+
 
 #include <SPI.h>
 #include <WiFiNINA.h>
@@ -14,10 +13,26 @@
 char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
 
+/* Arduino vars */
 long time = 0;
 byte mac[6];
-bool serial_verbunden = 0;
+bool serialVerbunden = 0;
 const long restart_time = 3600000;
+
+/* Buffer zum Verarbeiten der Anfragen */
+char buffer[100] = { 0 };
+
+typedef enum Funktion {
+  UNERKANNT = 0,
+  WEITERLEITEN,
+  OEFFNEN,
+  STATUS_ABFRAGE
+} Funktion;
+
+/* Variablen zum verarbeiten der Anfrage */
+Funktion funktion;
+bool istServer;
+int fachNr;
 
 // Server hört Port 80
 WiFiServer server(80);
@@ -39,7 +54,7 @@ void setup() {
   }
 
   // Ausgabe deaktivieren für schnellere Server-Antwort
-  serial_verbunden = Serial;
+  serialVerbunden = Serial;
 
   // WiFi Modul prüfen (Keine Versionsprüfung)
   if (WiFi.status() == WL_NO_MODULE) {
@@ -53,8 +68,7 @@ void setup() {
     };
   }
 
-
-  { // MAC-Adresse ausgeben
+  if (serialVerbunden) { // MAC-Adresse ausgeben
     WiFi.macAddress(mac);
     Serial.print("MAC: ");
     Serial.print(mac[5], HEX);
@@ -93,7 +107,7 @@ void loop() {
   }
 
   // WLAN-Daten ausgeben (auch IP-Adresse)
-  printWifiStatus();
+  printWifiStatus(serialVerbunden);
 
   // Server starten
   server.begin();
@@ -107,66 +121,64 @@ void loop() {
     WiFiClient client = server.available();
     if (client) {
       digitalWrite(LED_BUILTIN, HIGH);
-      Serial.println("new client");
-      // an http request ends with a blank line
-      boolean currentLineIsBlank = true;
-      while (client.connected()) {
-        if (client.available()) {
-          char c = client.read();
 
-          if (serial_verbunden) {
-            Serial.write(c);
+      funktion = UNERKANNT;
+      istServer = false;
+      fachNr = -1;
+
+      /* Verarbeitung Anfrage */
+      while (client.available() && funktion != WEITERLEITEN && (funktion == UNERKANNT || !istServer)) {
+        getWord(client, buffer);
+
+        /* Wort einer Funktion zuordnen */
+        if (strcmp(buffer, "GET") == 0) {
+          /* "path" erfassen */
+          if (client.available()) {
+            getWord(client, buffer);
           }
-          // if you've gotten to the end of the line (received a newline
-          // character) and the line is blank, the http request has ended,
-          // so you can send a reply
-          if (c == '\n' && currentLineIsBlank) {
-            if (0) {
-              client.println("HTTP/1.1 301 Moved Permanently");
-              client.println("Location: https://pickup-station.stec.fh-wedel.de/");
-              client.println();
-            }
 
-            if (1) {
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close"); // the connection will be closed after completion of the response
-              // client.println("Refresh: 2");        // refresh the page automatically every 5 sec
-              client.println();
-              client.println("<!DOCTYPE HTML>");
-              client.println("<html>");
-              client.println(millis());
-              if (0) { // Ausgabe der Werte analoger Pins deaktivieren
-                    // output the value of each analog input pin
-                for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
-                  int sensorReading = analogRead(analogChannel);
-                  client.print("analog input ");
-                  client.print(analogChannel);
-                  client.print(" is ");
-                  client.print(sensorReading);
-                  client.println("<br />");
-                }
-              }
-              client.println("</html>");
-            }
+          /* "path" auswerten */
+          switch (buffer[1]) {
+          case 'o':
+            /* Fach öffnen */
+            funktion = OEFFNEN;
+            fachNr = getInt(buffer + 2);
+            break;
+          case 's':
+            /* Status zurücksenden */
+            funktion = STATUS_ABFRAGE;
+            break;
+          default:
+            /* "Falscher Code: weiterleiten zu Webinterface" */
+            funktion = WEITERLEITEN;
             break;
           }
-          if (c == '\n') {
-            // you're starting a new line
-            currentLineIsBlank = true;
-          }
-          else if (c != '\r') {
-            // you've gotten a character on the current line
-            currentLineIsBlank = false;
+        }
+        else if (strcmp(buffer, "identification:") == 0) {
+          getWord(client, buffer);
+          if (buffer == "4ef8487cc93a9a9e") {
+            istServer = true;
           }
         }
       }
+
+      while (client.available()) { client.read(); }
+
+      /*
+        client.println("HTTP/1.1 301 Moved Permanently");
+        client.println("Location: https://pickup-station.stec.fh-wedel.de/");
+        client.println();
+
+        client.println("HTTP/1.1 200 OK");
+        client.println("Content-Type: application/json");
+        client.println("Connection: close"); // the connection will be closed after completion of the response
+      */
+
       // give the web browser time to receive the data
       delay(1);
+      client.stop();
 
       // close the connection:
-      client.stop();
-      Serial.println("client disconnected");
       digitalWrite(LED_BUILTIN, LOW);
     }
   }
@@ -184,23 +196,113 @@ void loop() {
   time = millis() + restart_time;
 }
 
-void printWifiStatus() {
-  Serial.println("----------------------------------");
+/**
+ * "Parsed" eine Zahl aus einem String bis ein Zeichen
+ * erkannt wird, welches keine Ziffer ist.
+ *
+ * @param str String, der geparsed werden soll
+ */
+int getInt(char* str) {
+  bool isNumber = true;
+  int res = 0;
+  char* ptr = str;
+  while (*ptr && isNumber) {
+    switch (*ptr) {
+    case '0':
+      res *= 10;
+      break;
+    case '1':
+      res *= 10;
+      res += 1;
+      break;
+    case '2':
+      res *= 10;
+      res += 2;
+      break;
+    case '3':
+      res *= 10;
+      res += 3;
+      break;
+    case '4':
+      res *= 10;
+      res += 4;
+      break;
+    case '5':
+      res *= 10;
+      res += 5;
+      break;
+    case '6':
+      res *= 10;
+      res += 6;
+      break;
+    case '7':
+      res *= 10;
+      res += 7;
+      break;
+    case '8':
+      res *= 10;
+      res += 8;
+      break;
+    case '9':
+      res *= 10;
+      res += 9;
+      break;
+    default:
+      isNumber = false;
+      break;
+    }
+  }
+  return res;
+}
 
-  // SSID ausgeben
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
+/**
+ * Liest solange vom Client ein bis ein Leerzeichen,
+ * \r oder \n kommt. "Leerraum" wird ersetzt durch \0
+ *
+ * @param client Client vom dem gelesen werden soll
+ * @param buffer Char-Array in das hineingelesen
+ * wird. Der Pointer wird nicht verändert.
+ */
+void getWord(WiFiClient client, char* buffer) {
+  char* bufferPtr = buffer;
 
-  // IP-Adresse ausgeben
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Adresse: ");
-  Serial.println(ip);
+  int counter = 0;
 
-  // Signalstärke ausgeben
-  long rssi = WiFi.RSSI();
-  Serial.print("Signalstärke (RSSI):");
-  Serial.print(rssi);
-  Serial.println(" dBm");
+  bufferPtr--;
+  do {
+    *++bufferPtr = (char)client.read();
+    if (*bufferPtr == '\r') {
+      bufferPtr--;
+    }
+    else {
+      if (*bufferPtr == ' ' || *bufferPtr == '\n') {
+        *bufferPtr = '\0';
+      }
+    }
+  } while (client.available() && *bufferPtr != ' ' && *bufferPtr != '\n' && counter++ < 100);
 
-  Serial.println("----------------------------------\n");
+  *bufferPtr = '\0';
+}
+
+void printWifiStatus(bool serialConnected) {
+  if (serialConnected) {
+    Serial.println("----------------------------------");
+
+    // SSID ausgeben
+    Serial.print("SSID: ");
+    Serial.println(WiFi.SSID());
+
+    // IP-Adresse ausgeben
+    IPAddress ip = WiFi.localIP();
+    Serial.print("IP Adresse: ");
+    Serial.println(ip);
+
+    // Signalstärke ausgeben
+    long rssi = WiFi.RSSI();
+    Serial.print("Signalstärke (RSSI):");
+    Serial.print(rssi);
+    Serial.println(" dBm");
+
+    Serial.println("----------------------------------\n");
+  }
 }

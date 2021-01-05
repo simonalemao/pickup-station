@@ -22,13 +22,15 @@ export class Arduino {
       return prom;
    }
 
-   open(id){
+   open(id) {
       return this.#getPromise(`o${id}`)
    }
 
    #getPromise(pathOhneSlash) {
       return new Promise(result => {
-         var req = request(`http://${this.#arduIP}/${pathOhneSlash}`, {
+         var req = request({
+            "hostname": this.#arduIP,
+            "path": `/${pathOhneSlash}`,
             "timeout": 5000,
             "headers": {
                "identification": "4ef8487cc93a9a9e"
