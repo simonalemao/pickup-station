@@ -7,7 +7,7 @@ const leereDaten = {
          "id": 1,
          "title": "",
          "description": "",
-         "size": "s",
+         "size": "S",
          "created_at": "",
          "last_opened_at": "",
          "state": 1 // 1 = geschlossen
@@ -29,7 +29,7 @@ export class Daten {
       return this.#arduino.getStatus();
    }
 
-   getBelegteBoxen() {
+   async getBelegteBoxen() {
       var res = [];
 
       this.#get("belegte").forEach(belegt => {
@@ -40,22 +40,92 @@ export class Daten {
    }
 
    open(id) {
+      var boxen = this.#get("boxen");
+
+      boxen[`${id}`]["last_opened_at"] = this.#currentDate();
+
+      this.#set({ "boxen": boxen });
+
       return this.#arduino.open(id);
    }
 
    async getBox(id) {
-      var status;
-      do {
-         status = await this.#arduino.getStatus()
-      } while (status == "{}")
-
-      status = JSON.parse(status);
+      var status = JSON.parse(await this.#arduino.getStatus());
 
       var box = this.#get("boxen")[`${id}`]
 
-      box["state"] = status[id]; 
+      box["state"] = status[id];
 
       return JSON.stringify(box);
+   }
+
+   async boxFreigeben(id) {
+      var belegteNeu;
+
+      this.#get("belegte").forEach(belegtAlt => {
+         if (belegtAlt != `${id}`) {
+            belegteNeu.push(`${id}`);
+         }
+      });
+
+      this.#set({ "belegte": belegteNeu });
+
+      return
+   }
+
+   async getVerfuegbare() {
+      var boxen = this.#get("boxen");
+
+      var verf = {
+         "S": false,
+         "M": false,
+         "L": false
+      }
+
+      var belegte = this.#get("belegte");
+
+      for (box in boxen) {
+         if (!Array.includes(belegte, `${box.id}`)) {
+            verf[box.size] = true;
+         }
+      }
+
+      return JSON.stringify(verf);
+   }
+
+   async getBoxMitGroesse(groesse) {
+      var boxen = this.#get("boxen");
+
+      var belegte = this.#get("belegte");
+
+      var resBox;
+
+      for (box in boxen) {
+         if (!Array.includes(belegte, `${box.id}`) && box.size == groesse) {
+            resBox = box;
+         }
+      }
+
+      resBox.created_at = this.#currentDate();
+      resBox.last_opened_at = this.#currentDate();
+
+      boxen[`${resBox.id}`] = resBox;
+
+      this.#set({ "boxen": boxen });
+
+      return resBox;
+   }
+
+   async update(payloadStr) {
+      var pl = JSON.parse(payloadStr);
+      var boxen = this.#get("boxen");
+
+      boxen[`${pl.boxId}`]["title"] = pl.title;
+      boxen[`${pl.boxId}`]["description"] = pl.description;
+
+      this.#set({ "boxen": boxen });
+
+      return
    }
 
    #get(keyStr) {
@@ -88,5 +158,11 @@ export class Daten {
 
    #writeToFile() {
       writeFileSync(path, JSON.stringify(this.#daten))
+   }
+
+   #currentDate() {
+      var date = new Date();
+
+      return `${date.getDate()}.${date.getMonth()}.${date.getFullYear()}`;
    }
 }

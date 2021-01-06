@@ -140,8 +140,12 @@ void loop() {
           switch (buffer[1]) {
           case 'o':
             /* Fach öffnen */
-            funktion = OEFFNEN;
             fachNr = getInt(buffer + 2);
+            if (fachNr > 0 && fachNr <= compNum()) {
+              funktion = OEFFNEN;
+            } else {
+              funktion = WEITERLEITEN;
+            }
             break;
           case 's':
             /* Status zurücksenden */
@@ -167,6 +171,8 @@ void loop() {
       }
 
       if (funktion == OEFFNEN) {
+        // *** Dekrement für Nullindizierung! *** //
+        fachNr--;
         openDoor(fachNr);
         client.println("HTTP/1.1 200 OK");
         client.println("Connection: close");
@@ -191,13 +197,11 @@ void loop() {
         client.println("HTTP/1.1 301 Moved Permanently");
         client.println("Location: https://pickup-station.stec.fh-wedel.de/");
         client.println();
-        break;
       }
 
-      delay(1);
+      client.flush();
       client.stop();
 
-      // close the connection:
       digitalWrite(LED_BUILTIN, LOW);
     }
   }
@@ -217,7 +221,8 @@ void loop() {
 
 /**
  * "Parsed" eine Zahl aus einem String bis ein Zeichen
- * erkannt wird, welches keine Ziffer ist.
+ * erkannt wird, welches keine Ziffer ist. Ist die Zahl negativ oder
+ * wird keine Ziffer/char angegeben wird 0 zurückgegeben.
  *
  * @param str String, der geparsed werden soll
  */

@@ -52,48 +52,26 @@ export const actions = {
     });
   },
   async refreshBox({ commit, getters }, { boxId }) {
-    console.log(await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=get_box&id=${boxId}`));
+    var box = await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=get_box&id=${boxId}`);
 
-    return new Box({
-      id: boxId,
-      title: 'Testtitel',
-      description: 'Beschreibung',
-      size: 'L',
-      created_at: '14.12.20',
-      last_opened_at: '15.12.20',
-      state: 1
-    })
+    console.log(box);
+
+    return box;
   },
   async deleteBox({ commit }, { boxId }) {
     await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=delete&id=${boxId}`)
   },
   async getAvailableSizes({ commit }) {
-    await this.$axios.$get('https://pickup-station.stec.fh-wedel.de/backend?f=get_av_sizes')
-
-    commit('setAvailableSizes', {
-      L: true,
-      M: true,
-      S: true
-    })
+    commit('setAvailableSizes', await this.$axios.$get('https://pickup-station.stec.fh-wedel.de/backend?f=get_av_sizes'))
   },
   async requestNewBox({ commit }, { size }) {
     var box = this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=request_and_open&size=${size}`)
 
-    // console.log(box);
+    console.log(box);
 
-    return new Box({
-      id: 5,
-      title: 'Testtitel',
-      description: 'Beschreibung',
-      size: 'L',
-      created_at: '14.12.20',
-      last_opened_at: '15.12.20',
-      state: 0
-    })
+    return box;
   },
   async updateBox({ commit }, payload) {
-    console.log(commit);
-    console.log(payload);
     await this.$axios.$post(`https://pickup-station.stec.fh-wedel.de/backend?f=update`, payload)
   }
 }

@@ -27,24 +27,41 @@ export default async function (req, res) {
 
       switch (query['f']) {
          case "arduino":
-            var x = await daten.arduino();
-            console.log("ardu:\n" + x);
-            res.end(x);
+            res.end(await daten.arduino());
             break;
          case "get_occupied":
-            res.end(daten.getBelegteBoxen());
+            res.end(await daten.getBelegteBoxen());
             break;
          case "open":
             await daten.open(query["id"]);
             res.end()
+            break;
          case "get_box":
             res.end(await daten.getBox(query["id"]));
+            break;
          case "delete":
-         case "get_av_sizes":
-         case "request_and_open":
-         case "update":
-            console.log(query);
+            await daten.boxFreigeben(query["id"]);
             res.end();
+            break;
+         case "get_av_sizes":
+            res.end(await daten.getVerfuegbare());
+            break;
+         case "request_and_open":
+            var box = await daten.getBoxMitGroesse(query["size"]);
+            await daten.open(box.id);
+            res.end(JSON.stringify(box));
+         case "update":
+            var payload = "";
+            
+            req.on("data", chunk => {
+               payload += chunk;
+            })
+
+            req.on("end", () => {
+               await daten.update(payload);
+               res.end();
+            })
+
             break;
          default:
             console.log(query['f']);

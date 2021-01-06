@@ -11,19 +11,19 @@ export class Arduino {
    }
 
    getStatus() {
-      var prom = this.#getPromise("");
+      var prom = this.#getPromise("s");
 
       var res = await prom;
-      if (res == "{}") {
+      if (res == "") {
          this.#arduIP = this.#getArduIP();
-         prom = this.#getPromise("");
+         prom = this.#getPromise("s");
       }
 
       return prom;
    }
 
    open(id) {
-      return this.#getPromise(`o${id}`)
+      return this.#getPromise(`o${id}`);
    }
 
    #getPromise(pathOhneSlash) {
@@ -50,13 +50,13 @@ export class Arduino {
          req.on("timeout", () => {
             req.destroy();
             console.log("timeout");
-            result("{}");
+            result("");
          });
 
          req.on("error", (err) => {
             req.destroy();
             console.log(`E: ${err}`);
-            result("{}");
+            result("");
          });
 
          req.end();
