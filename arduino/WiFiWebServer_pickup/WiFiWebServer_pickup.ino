@@ -16,7 +16,6 @@ char pass[] = SECRET_PASS;
 /* Arduino vars */
 long time = 0;
 byte mac[6];
-bool serialVerbunden = 0;
 const long restart_time = 3600000;
 
 /* Buffer zum Verarbeiten der Anfragen */
@@ -44,8 +43,8 @@ void setup() {
   // Serial
   Serial.begin(9600);
 
-  // 6 Sekunden auf serielles Terminal warten
-  time = millis() + 6000;
+  // 8 Sekunden auf serielles Terminal warten
+  time = millis() + 8000;
   while (!Serial && (time > millis())) {
     delay(500);
     digitalWrite(LED_BUILTIN, HIGH);
@@ -53,8 +52,8 @@ void setup() {
     digitalWrite(LED_BUILTIN, LOW);
   }
 
-  // Ausgabe deaktivieren für schnellere Server-Antwort
-  serialVerbunden = Serial;
+  // Fächer vorbereiten
+  setupCompartments();
 
   // WiFi Modul prüfen (Keine Versionsprüfung)
   if (WiFi.status() == WL_NO_MODULE) {
@@ -68,7 +67,7 @@ void setup() {
     };
   }
 
-  if (serialVerbunden) { // MAC-Adresse ausgeben
+  { // MAC-Adresse ausgeben
     WiFi.macAddress(mac);
     Serial.print("MAC: ");
     Serial.print(mac[5], HEX);
@@ -98,16 +97,15 @@ void loop() {
 
     if (WiFi.status() != WL_CONNECTED) {
       // 60 Sekunden auf WLAN warten.
-      delay(60000);
-    }
-    else {
+      delay(5000);
+    } else {
       // 1 Sekunde für stabile Verbindung
       delay(1000);
     }
   }
 
   // WLAN-Daten ausgeben (auch IP-Adresse)
-  printWifiStatus(serialVerbunden);
+  printWifiStatus();
 
   // Server starten
   server.begin();
@@ -133,6 +131,7 @@ void loop() {
         /* Wort einer Funktion zuordnen */
         if (strcmp(buffer, "GET") == 0) {
           /* "path" erfassen */
+
           if (client.available()) {
             getWord(client, buffer);
           }
@@ -153,10 +152,9 @@ void loop() {
             funktion = WEITERLEITEN;
             break;
           }
-        }
-        else if (strcmp(buffer, "identification:") == 0) {
+        } else if (strcmp(buffer, "identification:") == 0) {
           getWord(client, buffer);
-          if (buffer == "4ef8487cc93a9a9e") {
+          if (strcmp(buffer, "4ef8487cc93a9a9e") == 0) {
             istServer = true;
           }
         }
@@ -164,17 +162,38 @@ void loop() {
 
       while (client.available()) { client.read(); }
 
-      /*
+      if (!istServer) {
+        funktion = WEITERLEITEN;
+      }
+
+      if (funktion == OEFFNEN) {
+        openDoor(fachNr);
+        client.println("HTTP/1.1 200 OK");
+        client.println("Connection: close");
+        client.println();
+      } else if (funktion == STATUS_ABFRAGE) {
+        int* fachStatus = check(); // 1 = offen
+        client.println("HTTP/1.1 200 OK");
+        client.println("Content-Type: application/json");
+        client.println("Connection: close");
+        client.println();
+        client.print("[");
+        client.print(fachStatus[0]);
+        for (fachNr = 1; fachNr < compNum(); fachNr++) {
+          client.print(",");
+          client.print(fachStatus[fachNr]);
+        }
+        client.print("]");
+        client.println();
+        client.println();
+      } else {
+        // fkt: WEITERLEITEN & UNERKANNT
         client.println("HTTP/1.1 301 Moved Permanently");
         client.println("Location: https://pickup-station.stec.fh-wedel.de/");
         client.println();
+        break;
+      }
 
-        client.println("HTTP/1.1 200 OK");
-        client.println("Content-Type: application/json");
-        client.println("Connection: close"); // the connection will be closed after completion of the response
-      */
-
-      // give the web browser time to receive the data
       delay(1);
       client.stop();
 
@@ -207,7 +226,7 @@ int getInt(char* str) {
   int res = 0;
   char* ptr = str;
   while (*ptr && isNumber) {
-    switch (*ptr) {
+    switch (*ptr++) {
     case '0':
       res *= 10;
       break;
@@ -270,39 +289,35 @@ void getWord(WiFiClient client, char* buffer) {
 
   bufferPtr--;
   do {
-    *++bufferPtr = (char)client.read();
+    *++bufferPtr = client.read();
+
     if (*bufferPtr == '\r') {
       bufferPtr--;
-    }
-    else {
+    } else {
       if (*bufferPtr == ' ' || *bufferPtr == '\n') {
         *bufferPtr = '\0';
       }
     }
-  } while (client.available() && *bufferPtr != ' ' && *bufferPtr != '\n' && counter++ < 100);
-
-  *bufferPtr = '\0';
+  } while (client.available() && *bufferPtr != '\0' && counter++ < 100);
 }
 
-void printWifiStatus(bool serialConnected) {
-  if (serialConnected) {
-    Serial.println("----------------------------------");
+void printWifiStatus() {
+  Serial.println("----------------------------------");
 
-    // SSID ausgeben
-    Serial.print("SSID: ");
-    Serial.println(WiFi.SSID());
+  // SSID ausgeben
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
 
-    // IP-Adresse ausgeben
-    IPAddress ip = WiFi.localIP();
-    Serial.print("IP Adresse: ");
-    Serial.println(ip);
+  // IP-Adresse ausgeben
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Adresse: ");
+  Serial.println(ip);
 
-    // Signalstärke ausgeben
-    long rssi = WiFi.RSSI();
-    Serial.print("Signalstärke (RSSI):");
-    Serial.print(rssi);
-    Serial.println(" dBm");
+  // Signalstärke ausgeben
+  long rssi = WiFi.RSSI();
+  Serial.print("Signalstärke (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
 
-    Serial.println("----------------------------------\n");
-  }
+  Serial.println("----------------------------------");
 }

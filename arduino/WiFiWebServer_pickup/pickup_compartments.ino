@@ -64,7 +64,7 @@ void openDoor(int comp) {
 checks all compartments if they are open
 sets copmpartmentOpen[] to true or false for each compartment
 */
-void check() {
+int* check() {
   for (int j = 0; j < compartmentNum; j++) {
     int buttonState = digitalRead(compartmentButtons[j]);
     if (buttonState == HIGH) {
@@ -74,7 +74,7 @@ void check() {
         pixels.setPixelColor(i, colorOpen);
         pixels.show();
       }
-    } else {
+    } else { 
       compartmentOpen[j] = false;
       // turn LED off:
       for (int i = LEDPROCOM * j; i < LEDPROCOM + LEDPROCOM * j; i++) {
@@ -83,5 +83,13 @@ void check() {
       }
     }
   }
+
+  return compartmentOpen;
 }
 
+/**
+ * Gibt die Anzahl Fächer zurück
+ */
+int compNum() {
+  return compartmentNum;
+}
