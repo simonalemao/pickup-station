@@ -54,7 +54,7 @@ export const actions = {
   async refreshBox({ commit, getters }, { boxId }) {
     var box = await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=get_box&id=${boxId}`);
 
-    console.log(box);
+    console.log("Box",box);
 
     return box;
   },
@@ -65,13 +65,13 @@ export const actions = {
     commit('setAvailableSizes', await this.$axios.$get('https://pickup-station.stec.fh-wedel.de/backend?f=get_av_sizes'))
   },
   async requestNewBox({ commit }, { size }) {
-    var box = this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=request_and_open&size=${size}`)
-
-    console.log(box);
+    var box = await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=request_and_open&size=${size}`)
 
     return box;
   },
   async updateBox({ commit }, payload) {
-    await this.$axios.$post(`https://pickup-station.stec.fh-wedel.de/backend?f=update`, payload)
+    console.log("paaaaa", payload);
+
+    await this.$axios.$post(`https://pickup-station.stec.fh-wedel.de/backend?f=update`, JSON.stringify(payload))
   }
 }

@@ -10,7 +10,7 @@ export class Arduino {
       this.#arduIP = this.#getArduIP();
    }
 
-   getStatus() {
+   async getStatus() {
       var prom = this.#getPromise("s");
 
       var res = await prom;
@@ -19,7 +19,7 @@ export class Arduino {
          prom = this.#getPromise("s");
       }
 
-      return prom;
+      return await prom;
    }
 
    open(id) {
@@ -27,40 +27,44 @@ export class Arduino {
    }
 
    #getPromise(pathOhneSlash) {
-      return new Promise(result => {
-         var req = request({
-            "hostname": this.#arduIP,
-            "path": `/${pathOhneSlash}`,
-            "timeout": 5000,
-            "headers": {
-               "identification": "4ef8487cc93a9a9e"
-            }
-         }, (incMes) => {
-            var resultData = "";
+      if (this.#arduIP == null) {
+         return new Promise(res => { result(""); });
+      } else {
+         return new Promise(result => {
+            var req = request({
+               "hostname": this.#arduIP,
+               "path": `/${pathOhneSlash}`,
+               "timeout": 5000,
+               "headers": {
+                  "identification": "4ef8487cc93a9a9e"
+               }
+            }, (incMes) => {
+               var resultData = "";
 
-            incMes.on("data", (chunk) => {
-               resultData += chunk;
-            })
+               incMes.on("data", (chunk) => {
+                  resultData += chunk;
+               })
 
-            incMes.on("end", () => {
-               result(resultData);
-            })
+               incMes.on("end", () => {
+                  result(resultData);
+               })
+            });
+
+            req.on("timeout", () => {
+               req.destroy();
+               result("");
+            });
+
+            req.on("error", (err) => {
+               req.destroy();
+               this.#arduIP = this.#getArduIP();
+               console.log(`Reqeust E: ${err}`);
+               result("");
+            });
+
+            req.end();
          });
-
-         req.on("timeout", () => {
-            req.destroy();
-            console.log("timeout");
-            result("");
-         });
-
-         req.on("error", (err) => {
-            req.destroy();
-            console.log(`E: ${err}`);
-            result("");
-         });
-
-         req.end();
-      });
+      }
    }
 
    #getArduIP() {

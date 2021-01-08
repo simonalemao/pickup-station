@@ -1,7 +1,8 @@
 const http = require('http');
 const querystring = require('querystring');
 
-const daten = new (require('./modules/Daten.js').Daten)();
+const { Daten } = require('./modules/Daten.js');
+const daten = new Daten();
 
 /**
  * 
@@ -52,13 +53,13 @@ export default async function (req, res) {
             res.end(JSON.stringify(box));
          case "update":
             var payload = "";
-            
+
             req.on("data", chunk => {
                payload += chunk;
             })
 
             req.on("end", () => {
-               await daten.update(payload);
+               daten.update(payload);
                res.end();
             })
 

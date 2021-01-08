@@ -12,8 +12,8 @@ int compartmentOpen[compartmentNum] = {}; // saves if the compartment is open or
 
 //**************************
 
-#define colorClosed    pixels.Color(155, 0, 0)
-#define colorOpen      pixels.Color(0, 155, 0)
+#define colorClosed    pixels.Color(255, 0, 0)
+#define colorOpen      pixels.Color(0, 255, 0)
 #define LEDPIN         5  //LED pin
 #define LEDPROCOM      4    //LEDs pro fach
 #define SERVOMIN       350 // This is the 'minimum' pulse length count (out of 4096)
@@ -40,6 +40,16 @@ void setupCompartments() {
   // Analog servos run at ~50 Hz updates
   pwm.setPWMFreq(SERVO_FREQ);
   delay(100);
+
+
+  for (int j = 0; j < compartmentNum; j++) {
+
+      // turn LED on:
+      for (int i = LEDPROCOM * j; i < LEDPROCOM + LEDPROCOM * j; i++) {
+        pixels.setPixelColor(i, pixels.Color(255, 255, 255));
+        pixels.show();
+      }
+  }
 }
 
 

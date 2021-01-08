@@ -10,7 +10,7 @@ const leereDaten = {
          "size": "S",
          "created_at": "",
          "last_opened_at": "",
-         "state": 1 // 1 = geschlossen
+         "state": 0 // 1 = offen
       }
    },
    "belegte": []
@@ -84,11 +84,13 @@ export class Daten {
 
       var belegte = this.#get("belegte");
 
-      for (box in boxen) {
-         if (!Array.includes(belegte, `${box.id}`)) {
-            verf[box.size] = true;
+      Object.keys(boxen).forEach(boxStr => {
+         if (belegte.indexOf(`${boxen[boxStr].id}`) == -1) {
+            verf[boxen[boxStr].size] = true;
          }
-      }
+      })
+
+
 
       return JSON.stringify(verf);
    }
@@ -100,11 +102,11 @@ export class Daten {
 
       var resBox;
 
-      for (box in boxen) {
-         if (!Array.includes(belegte, `${box.id}`) && box.size == groesse) {
-            resBox = box;
+      Object.keys(boxen).forEach(boxStr => {
+         if ((belegte.indexOf(`${boxen[boxStr].id}`) == -1) && boxen[boxStr].size == groesse) {
+            resBox = boxen[boxStr];
          }
-      }
+      })
 
       resBox.created_at = this.#currentDate();
       resBox.last_opened_at = this.#currentDate();
@@ -117,6 +119,10 @@ export class Daten {
    }
 
    async update(payloadStr) {
+
+      console.log("payloadStr");
+      console.log(payloadStr);
+
       var pl = JSON.parse(payloadStr);
       var boxen = this.#get("boxen");
 
@@ -163,6 +169,6 @@ export class Daten {
    #currentDate() {
       var date = new Date();
 
-      return `${date.getDate()}.${date.getMonth()}.${date.getFullYear()}`;
+      return `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()}`;
    }
 }

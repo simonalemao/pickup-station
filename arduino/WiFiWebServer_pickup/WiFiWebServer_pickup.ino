@@ -118,6 +118,8 @@ void loop() {
   while (WiFi.status() == WL_CONNECTED && (time > millis())) {
     WiFiClient client = server.available();
     if (client) {
+      Serial.println("Neue Anfrage");
+
       digitalWrite(LED_BUILTIN, HIGH);
 
       funktion = UNERKANNT;

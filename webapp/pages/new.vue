@@ -11,12 +11,12 @@
           <div class="flex items-center justify-center px-2 py-2 text-4xl shadow-xl rounded-3xl" style="width: 100px; height: 100px;" />
         </div>
         <div>
-          <size :width="100" :height="220" size="M" @click.native="requestNewBox('S')" />
+          <size :width="100" :height="220" size="M" @click.native="requestNewBox('M')" />
         </div>
       </div>
 
       <div class="flex justify-center">
-        <size :width="220" :height="200" size="L" @click.native="requestNewBox('S')" />
+        <size :width="220" :height="200" size="L" @click.native="requestNewBox('L')" />
       </div>
     </div>
 
@@ -111,7 +111,7 @@ export default {
       if (newBox.isLocked() && oldBox.isOpen()) {
         setTimeout(() => {
           this.boxIsLocked = true
-        }, 3000)
+        }, 5000)
         clearInterval(this.interval)
       }
     }
@@ -123,10 +123,10 @@ export default {
       })
 
       this.interval = setInterval(async () => {
-        const box = await this.$store.dispatch('box/refreshBox', {
+        const refreshedBox = await this.$store.dispatch('box/refreshBox', {
           boxId: this.box.getId()
         })
-        this.box = box
+        this.box = refreshedBox
       }, 2000)
     },
     isPrivate () {
