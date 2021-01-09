@@ -42,11 +42,11 @@ export default class Box {
   }
 
   isOpen () {
-    return this.box.state === 0
+    return this.box.state === 1
   }
 
   isLocked () {
-    return this.box.state === 1
+    return this.box.state === 0
   }
 
   toJson () {

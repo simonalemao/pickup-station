@@ -73,7 +73,8 @@ export default {
   },
   watch: {
     box (newBox, oldBox) {
-      if (newBox.isLocked() && oldBox.isOpen()) {
+      if (newBox.isLocked() /*&& oldBox.isOpen()*/) {
+        // mit "oldBox.isOpen()": Ladeschleife
         setTimeout(() => {
           this.boxIsLocked = true
         }, 5000)

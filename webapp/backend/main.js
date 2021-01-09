@@ -27,9 +27,6 @@ export default async function (req, res) {
       res.setHeader('Content-Type', 'application/json');
 
       switch (query['f']) {
-         case "arduino":
-            res.end(await daten.arduino());
-            break;
          case "get_occupied":
             res.end(await daten.getBelegteBoxen());
             break;
@@ -51,6 +48,7 @@ export default async function (req, res) {
             var box = await daten.getBoxMitGroesse(query["size"]);
             await daten.open(box.id);
             res.end(JSON.stringify(box));
+            break;
          case "update":
             var payload = "";
 
@@ -69,10 +67,6 @@ export default async function (req, res) {
             res.end();
             break;
       }
-
-
-      // var arduIp = getArduIp();
-      // console.log(`Arduino IP: ${arduIp == null ? "unbekannt" : arduIp}`);
    }
 }
 

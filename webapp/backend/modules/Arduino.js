@@ -11,24 +11,20 @@ export class Arduino {
    }
 
    async getStatus() {
-      var prom = this.#getPromise("s");
-
-      var res = await prom;
-      if (res == "") {
-         this.#arduIP = this.#getArduIP();
-         prom = this.#getPromise("s");
-      }
-
-      return await prom;
+      return this.#getPromise("s");
    }
 
    open(id) {
       return this.#getPromise(`o${id}`);
    }
 
+   arduIpErneuern() {
+      this.#arduIP = this.#getArduIP();
+   }
+
    #getPromise(pathOhneSlash) {
       if (this.#arduIP == null) {
-         return new Promise(res => { result(""); });
+         throw "arduIP == null";
       } else {
          return new Promise(result => {
             var req = request({
@@ -39,6 +35,8 @@ export class Arduino {
                   "identification": "4ef8487cc93a9a9e"
                }
             }, (incMes) => {
+
+
                var resultData = "";
 
                incMes.on("data", (chunk) => {
@@ -53,13 +51,15 @@ export class Arduino {
             req.on("timeout", () => {
                req.destroy();
                result("");
+
+               throw "timeout";
             });
 
             req.on("error", (err) => {
                req.destroy();
-               this.#arduIP = this.#getArduIP();
-               console.log(`Reqeust E: ${err}`);
                result("");
+
+               throw "other error";
             });
 
             req.end();

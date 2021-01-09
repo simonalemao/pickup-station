@@ -1,4 +1,4 @@
-const { writeFileSync, readFile } = require('fs')
+const { writeFileSync, readFileSync } = require('fs')
 
 const path = "daten.json";
 const leereDaten = {
@@ -17,7 +17,7 @@ const leereDaten = {
 }
 
 export class Daten {
-   #daten = {};
+   #daten;
    #arduino;
 
    constructor() {
@@ -25,42 +25,87 @@ export class Daten {
       this.#arduino = new (require('./Arduino.js').Arduino)();
    }
 
-   arduino() {
-      return this.#arduino.getStatus();
-   }
-
    async getBelegteBoxen() {
       var res = [];
 
+      var boxen = this.#get("boxen");
+
       this.#get("belegte").forEach(belegt => {
-         res.push(this.#get("boxen")[belegt]);
+         res.push(boxen[belegt]);
       });
 
       return JSON.stringify(res);
    }
 
-   open(id) {
+   async open(id) {
       var boxen = this.#get("boxen");
 
-      boxen[`${id}`]["last_opened_at"] = this.#currentDate();
-
+      var isOpen = false;
+      var tryCount = 5;
+      boxen[`${id}`]["last_opened_at"] = this.#currentTime();
       this.#set({ "boxen": boxen });
 
-      return this.#arduino.open(id);
+      while (!isOpen && tryCount >= 0) {
+         try {
+            await this.#arduino.open(id);
+            isOpen = true;
+
+            boxen[`${id}`]["last_opened_at"] = this.#currentTime();
+            this.#set({ "boxen": boxen });
+         } catch (error) {
+            if (error == "arduIP == null") {
+               tryCount--;
+               this.#arduino.arduIpErneuern();
+            } else if (error == "timeout") {
+               tryCount--;
+               this.#arduino.arduIpErneuern();
+            } else if (error == "other error") {
+               tryCount = -1;
+            }
+         }
+      }
    }
 
    async getBox(id) {
-      var status = JSON.parse(await this.#arduino.getStatus());
+      var arduStat;
+
+      var tryCount = 2;
+      while (arduStat == undefined) {
+         try {
+            arduStat = await this.#arduino.getStatus();
+         } catch (error) {
+            if (error == "arduIP == null") {
+               tryCount--;
+               this.#arduino.arduIpErneuern();
+            } else if (error == "timeout") {
+               tryCount--;
+               this.#arduino.arduIpErneuern();
+            } else if (error == "other error") {
+               tryCount = 0;
+            }
+
+            if (tryCount == 0) {
+               // zurückgeben, dass alle Fächer geschlossen sind.
+               arduStat = "[";
+               Object.keys(this.#get("boxen")).forEach(box => {
+                  arduStat += "0,";
+               });
+               arduStat += "0]";
+            }
+         }
+      }
+
+      arduStat = JSON.parse(arduStat);
 
       var box = this.#get("boxen")[`${id}`]
 
-      box["state"] = status[id];
+      box["state"] = arduStat[id - 1];
 
       return JSON.stringify(box);
    }
 
    async boxFreigeben(id) {
-      var belegteNeu;
+      var belegteNeu = [];
 
       this.#get("belegte").forEach(belegtAlt => {
          if (belegtAlt != `${id}`) {
@@ -69,8 +114,6 @@ export class Daten {
       });
 
       this.#set({ "belegte": belegteNeu });
-
-      return
    }
 
    async getVerfuegbare() {
@@ -90,39 +133,44 @@ export class Daten {
          }
       })
 
-
-
       return JSON.stringify(verf);
    }
 
    async getBoxMitGroesse(groesse) {
+      // Daten zum ermittel "getten"
       var boxen = this.#get("boxen");
-
       var belegte = this.#get("belegte");
 
+      // leere Box für Antwort auf Anfrage
       var resBox;
 
+      // Nach einer unbenutzten Box suchen
       Object.keys(boxen).forEach(boxStr => {
          if ((belegte.indexOf(`${boxen[boxStr].id}`) == -1) && boxen[boxStr].size == groesse) {
             resBox = boxen[boxStr];
          }
       })
 
-      resBox.created_at = this.#currentDate();
-      resBox.last_opened_at = this.#currentDate();
+      // Infos für zurückzugebende Box ändern
+      resBox.created_at = this.#currentTime();
+      resBox.last_opened_at = this.#currentTime();
+      resBox.title = "Kein Titel vorhanden";
+      resBox.description = "Keine Beschreibung vorhanden.";
 
+      // Zurückzugebende Box in Datenset speichern
       boxen[`${resBox.id}`] = resBox;
+      // Box als belegt speichern
+      belegte.push(`${resBox.id}`);
 
+      // Daten speichern (& in Datei schreiben)
       this.#set({ "boxen": boxen });
+      this.#set({ "belegte": belegte });
 
+      // Box zurückgeben
       return resBox;
    }
 
    async update(payloadStr) {
-
-      console.log("payloadStr");
-      console.log(payloadStr);
-
       var pl = JSON.parse(payloadStr);
       var boxen = this.#get("boxen");
 
@@ -147,17 +195,25 @@ export class Daten {
    #readFromFile() {
       var data = leereDaten;
 
-      readFile(path, 'utf8', (err, fileData) => {
-         if (err) {
-            if (err.code === "ENOENT") {
-               this.#writeToFile();
-            } else {
-               throw err;
-            }
-         } else {
-            data = JSON.parse(fileData);
+      // readFile(path, 'utf8', (err, fileData) => {
+      //    if (err) {
+      //       if (err.code === "ENOENT") {
+      //          this.#writeToFile();
+      //       } else {
+      //          throw err;
+      //       }
+      //    } else {
+      //       data = JSON.parse(fileData);
+      //    }
+      // })
+
+      try {
+         data = JSON.parse(readFileSync(path, 'utf8'));
+      } catch (error) {
+         if (error.code === "ENOENT") {
+            this.#writeToFile();
          }
-      })
+      }
 
       return data;
    }
@@ -166,9 +222,13 @@ export class Daten {
       writeFileSync(path, JSON.stringify(this.#daten))
    }
 
-   #currentDate() {
+   #currentTime() {
       var date = new Date();
 
-      return `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()}`;
+      return `${date.getDate() < 10 ? "0" + date.getDate() : date.getDate()}.`+
+      `${date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1}.`+
+      `${date.getFullYear()} `+
+      `${date.getHours() < 10 ? "0" + date.getHours() : date.getHours()}:`+
+      `${date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes()}`;
    }
 }
