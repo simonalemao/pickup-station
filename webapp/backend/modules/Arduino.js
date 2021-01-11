@@ -22,6 +22,10 @@ export class Arduino {
       this.#arduIP = this.#getArduIP();
    }
 
+   freigeben(id) {
+      return this.#getPromise(`f${id}`);
+   }
+
    #getPromise(pathOhneSlash) {
       if (this.#arduIP == null) {
          throw "arduIP == null";
@@ -52,14 +56,14 @@ export class Arduino {
                req.destroy();
                result("");
 
-               throw "timeout";
+               // throw "timeout";
             });
 
             req.on("error", (err) => {
                req.destroy();
                result("");
 
-               throw "other error";
+               // throw "other error";
             });
 
             req.end();

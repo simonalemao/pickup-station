@@ -114,6 +114,8 @@ export class Daten {
       });
 
       this.#set({ "belegte": belegteNeu });
+
+      this.#arduino.freigeben(id);
    }
 
    async getVerfuegbare() {
