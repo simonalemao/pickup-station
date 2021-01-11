@@ -8,12 +8,15 @@
 #define compartmentNum 1    //
 const int compartmentButtons[compartmentNum] = {8}; // the pin for the button in each compartment
 int compartmentOpen[compartmentNum] = {}; // saves if the compartment is open or closed
+int compartmentReserved[compartmentNum] = {false}; // saves if the compartment is reserved or not
 
 
 //**************************
 
-#define colorClosed    pixels.Color(255, 0, 0)
-#define colorOpen      pixels.Color(0, 255, 0)
+#define colorFree    pixels.Color(0, 255, 0)
+#define colorOpen      pixels.Color(255, 255, 255)
+#define colorReserved  pixels.Color(255, 0, 0)
+#define colorUnknown  pixels.Color(0, 0, 255)
 #define LEDPIN         5  //LED pin
 #define LEDPROCOM      20    //LEDs pro fach
 #define SERVOMIN       350 // This is the 'minimum' pulse length count (out of 4096)
@@ -44,19 +47,19 @@ void setupCompartments() {
 
   for (int j = 0; j < compartmentNum; j++) {
 
-      // turn LED on:
-      for (int i = LEDPROCOM * j; i < LEDPROCOM + LEDPROCOM * j; i++) {
-        pixels.setPixelColor(i, pixels.Color(255, 255, 255));
-        pixels.show();
-      }
+    // turn LED on:
+    for (int i = LEDPROCOM * j; i < LEDPROCOM + LEDPROCOM * j; i++) {
+      pixels.setPixelColor(i, colorUnknown);
+      pixels.show();
+    }
   }
 }
 
 
 
 /**
- opens the door of the given compartment
- takes 1 second
+  opens the door of the given compartment
+  takes 1 second
 */
 void openDoor(int comp) {
   for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
@@ -67,12 +70,11 @@ void openDoor(int comp) {
   for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
     pwm.setPWM(comp, 0, pulselen);
   }
-
-
+  reserveCompartment(comp);
 }
 /**
-checks all compartments if they are open
-sets copmpartmentOpen[] to true or false for each compartment
+  checks all compartments if they are open
+  sets copmpartmentOpen[] to true or false for each compartment
 */
 int* check() {
   for (int j = 0; j < compartmentNum; j++) {
@@ -84,12 +86,19 @@ int* check() {
         pixels.setPixelColor(i, colorOpen);
         pixels.show();
       }
-    } else { 
+    } else {
       compartmentOpen[j] = false;
       // turn LED off:
-      for (int i = LEDPROCOM * j; i < LEDPROCOM + LEDPROCOM * j; i++) {
-        pixels.setPixelColor(i, colorClosed);
-        pixels.show();
+      if (compartmentReserved[j]) {
+        for (int i = LEDPROCOM * j; i < LEDPROCOM + LEDPROCOM * j; i++) {
+          pixels.setPixelColor(i, colorReserved);
+          pixels.show();
+        }
+      } else {
+        for (int i = LEDPROCOM * j; i < LEDPROCOM + LEDPROCOM * j; i++) {
+          pixels.setPixelColor(i, colorFree);
+          pixels.show();
+        }
       }
     }
   }
@@ -98,8 +107,21 @@ int* check() {
 }
 
 /**
- * Gibt die Anzahl Fächer zurück
- */
+   gibt ein Fach frei
+*/
+void freeCompartment(int comp) {
+  compartmentReserved[comp] = false;
+}
+/**
+   reserviert ein Fach
+*/
+void reserveCompartment(int comp) {
+  compartmentReserved[comp] = true;
+}
+
+/**
+   Gibt die Anzahl Fächer zurück
+*/
 int compNum() {
   return compartmentNum;
 }
