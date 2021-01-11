@@ -15,7 +15,7 @@ int compartmentOpen[compartmentNum] = {}; // saves if the compartment is open or
 #define colorClosed    pixels.Color(255, 0, 0)
 #define colorOpen      pixels.Color(0, 255, 0)
 #define LEDPIN         5  //LED pin
-#define LEDPROCOM      4    //LEDs pro fach
+#define LEDPROCOM      20    //LEDs pro fach
 #define SERVOMIN       350 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX       500 // This is the 'maximum' pulse length count (out of 4096)
 #define USMIN          600 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150

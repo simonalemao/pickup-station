@@ -4,6 +4,8 @@ const querystring = require('querystring');
 const { Daten } = require('./modules/Daten.js');
 const daten = new Daten();
 
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 /**
  * 
  * @param {http.IncomingMessage} req Request

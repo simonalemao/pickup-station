@@ -2,8 +2,7 @@
 import Box from '@/classes/Box'
 import Vue from 'vue'
 
-const domain = "https://pickup-station.stec.fh-wedel.de";
-// const domain = "";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 export const state = () => ({
   boxes: [],
@@ -42,31 +41,31 @@ export const getters = {
 
 export const actions = {
   async open({ commit }, boxId) {
-    await this.$axios.$get(`${domain}/backend?f=open&id=${boxId}`)
+    await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=open&id=${boxId}`)
   },
   async fetchBoxes({ commit, getters }) {
     if (getters.boxes.length) {
       return
     }
-    var res = await this.$axios.$get(`${domain}/backend?f=get_occupied`)
+    var res = await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=get_occupied`)
 
     res.forEach(box => {
       commit('addBox', box)
     });
   },
   async refreshBox({ commit, getters }, { boxId }) {
-    return new Box(await this.$axios.$get(`${domain}/backend?f=get_box&id=${boxId}`));
+    return new Box(await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=get_box&id=${boxId}`));
   },
   async deleteBox({ commit }, { boxId }) {
-    await this.$axios.$get(`${domain}/backend?f=delete&id=${boxId}`)
+    await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=delete&id=${boxId}`)
   },
   async getAvailableSizes({ commit }) {
-    commit('setAvailableSizes', await this.$axios.$get(`${domain}/backend?f=get_av_sizes`))
+    commit('setAvailableSizes', await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=get_av_sizes`))
   },
   async requestNewBox({ commit }, { size }) {
-    return new Box(await this.$axios.$get(`${domain}/backend?f=request_and_open&size=${size}`));
+    return new Box(await this.$axios.$get(`https://pickup-station.stec.fh-wedel.de/backend?f=request_and_open&size=${size}`));
   },
   async updateBox({ commit }, payload) {
-    await this.$axios.$post(`${domain}/backend?f=update`, JSON.stringify(payload))
+    await this.$axios.$post(`https://pickup-station.stec.fh-wedel.de/backend?f=update`, JSON.stringify(payload))
   }
 }
