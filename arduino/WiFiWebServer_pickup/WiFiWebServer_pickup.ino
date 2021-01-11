@@ -25,7 +25,8 @@ typedef enum Funktion {
   UNERKANNT = 0,
   WEITERLEITEN,
   OEFFNEN,
-  STATUS_ABFRAGE
+  STATUS_ABFRAGE,
+  FREIGEBEN
 } Funktion;
 
 /* Variablen zum verarbeiten der Anfrage */
@@ -153,6 +154,15 @@ void loop() {
             /* Status zurücksenden */
             funktion = STATUS_ABFRAGE;
             break;
+          case 'f':
+            /* Fach freigeben */
+            fachNr = getInt(buffer + 2);
+            if (fachNr > 0 && fachNr <= compNum()) {
+              funktion = FREIGEBEN;
+            } else {
+              funktion = WEITERLEITEN;
+            }
+            break;
           default:
             /* "Falscher Code: weiterleiten zu Webinterface" */
             funktion = WEITERLEITEN;
@@ -193,6 +203,11 @@ void loop() {
         }
         client.print("]");
         client.println();
+        client.println();
+      } else if (funktion == FREIGEBEN) {
+        freeCompartment(fachNr);
+        client.println("HTTP/1.1 200 OK");
+        client.println("Connection: close");
         client.println();
       } else {
         // fkt: WEITERLEITEN & UNERKANNT
