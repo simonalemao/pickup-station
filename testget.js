@@ -50,3 +50,7 @@ console.log("Boby:\n", req.body);
 // })
 
 // req.end();
+
+
+// "lint:js": "eslint --ext .js,.vue --ignore-path .gitignore .",
+// "lint": "yarn lint:js"

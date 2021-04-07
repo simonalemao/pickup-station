@@ -3,26 +3,23 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nuxt --port 1920",
+    "dev": "nuxt --trace-warnings --port 1920",
     "build": "nuxt build",
     "start": "nuxt start --port 1920",
-    "generate": "nuxt generate",
-    "lint:js": "eslint --ext .js,.vue --ignore-path .gitignore .",
-    "lint": "yarn lint:js"
+    "generate": "nuxt generate"
   },
   "dependencies": {
-    "@nuxtjs/axios": "^5.12.2",
+    "@nuxtjs/axios": "^5.13.1",
     "core-js": "^3.6.5",
     "nuxt": "^2.14.6"
   },
   "devDependencies": {
-    "@nuxtjs/eslint-config": "^3.1.0",
-    "@nuxtjs/eslint-module": "^2.0.0",
+    "@nuxtjs/eslint-config": "^6.0.0",
+    "@nuxtjs/eslint-module": "^3.0.2",
     "@nuxtjs/google-fonts": "^1.2.0",
     "@nuxtjs/tailwindcss": "^3.1.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^7.10.0",
-    "eslint-plugin-nuxt": "^1.0.0",
+    "eslint": "^7.23.0",
+    "eslint-plugin-nuxt": "^2.0.0",
     "sass": "^1.30.0",
     "sass-loader": "^10.1.0"
   }
