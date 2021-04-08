@@ -6,9 +6,9 @@
 // müssen angepasst werden, je nach anzahl an fächern
 
 #define compartmentNum 1    //
-const int compartmentButtons[compartmentNum] = {8}; // the pin for the button in each compartment
+const int compartmentButtons[compartmentNum] = { 8 }; // the pin for the button in each compartment
 int compartmentOpen[compartmentNum] = {}; // saves if the compartment is open or closed
-int compartmentReserved[compartmentNum] = {false}; // saves if the compartment is reserved or not
+int compartmentReserved[compartmentNum] = { false }; // saves if the compartment is reserved or not
 
 
 //**************************
@@ -27,7 +27,7 @@ int compartmentReserved[compartmentNum] = {false}; // saves if the compartment i
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(LEDPROCOM*compartmentNum, LEDPIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(LEDPROCOM * compartmentNum, LEDPIN, NEO_GRB + NEO_KHZ800);
 
 /**
 
@@ -111,12 +111,14 @@ int* check() {
 */
 void freeCompartment(int comp) {
   compartmentReserved[comp] = false;
+  check();
 }
 /**
    reserviert ein Fach
 */
 void reserveCompartment(int comp) {
   compartmentReserved[comp] = true;
+  check();
 }
 
 /**

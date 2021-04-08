@@ -205,7 +205,8 @@ void loop() {
         client.println();
         client.println();
       } else if (funktion == FREIGEBEN) {
-        freeCompartment(fachNr);
+        // *** Dekrement für Nullindizierung! *** //
+        freeCompartment(--fachNr);
         client.println("HTTP/1.1 200 OK");
         client.println("Connection: close");
         client.println();
