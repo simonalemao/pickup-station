@@ -36,6 +36,7 @@ int fachNr;
 
 // Server hört Port 80
 WiFiServer server(80);
+WiFiSSLClient client;
 
 void setup() {
   // Pin für "LED-Output"
@@ -102,11 +103,26 @@ void loop() {
     } else {
       // 1 Sekunde für stabile Verbindung
       delay(1000);
+
+      // Server über IP-Adresse informieren
+      // WLAN-Daten ausgeben (auch IP-Adresse)
+      printWifiStatus();
+
+      if (client.connect("pickup-station.stec.fh-wedel.de", 443)) {
+        Serial.println("IP-Adresse wird bei Server hinterlegt.");
+        IPAddress ip = WiFi.localIP();
+        Serial.println(ip);
+        client.print("GET /backend?f=arduip&ip=");
+        client.print(ip);
+        client.println(" HTTP/1.1");
+        client.println("Host: pickup-station.stec.fh-wedel.de");
+        client.println("Connection: close");
+        client.println();
+        client.stop();
+        Serial.println("Verbindung wird getrennt.");
+      }
     }
   }
-
-  // WLAN-Daten ausgeben (auch IP-Adresse)
-  printWifiStatus();
 
   // Server starten
   server.begin();
