@@ -1,5 +1,18 @@
 <template>
-  <div class="flex items-center justify-center px-2 py-2 text-4xl shadow-xl rounded-3xl" :class="sizeClasses" :style="sizeStyles">
+  <div
+    class="
+      flex
+      items-center
+      justify-center
+      px-2
+      py-2
+      text-4xl
+      shadow-xl
+      rounded-3xl
+    "
+    :class="sizeClasses"
+    :style="sizeStyles"
+  >
     {{ size }}
   </div>
 </template>
@@ -9,43 +22,38 @@ export default {
   props: {
     size: {
       type: String,
-      default: 'S'
+      default: "",
     },
     width: {
       type: Number,
-      default: 100
+      default: 100,
     },
     height: {
       type: Number,
-      default: 100
-    }
-  },
-  data () {
-    return {
-      isAvaible: true
-    }
+      default: 100,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: false,
+    },
   },
   computed: {
-    sizeStyles () {
+    sizeStyles() {
       return {
-        width: this.width + 'px',
-        height: this.height + 'px'
-      }
+        width: this.width + "px",
+        height: this.height + "px",
+      };
     },
-    sizeClasses () {
+    sizeClasses() {
       return {
-        'text-primary': this.isAvaible,
-        'bg-white': this.isAvaible,
-        'text-gray-500': !this.isAvaible
-      }
-    }
+        "text-primary": this.isAvailable,
+        "bg-white": this.isAvailable,
+        "text-gray-500": !this.isAvailable,
+      };
+    },
   },
-  mounted () {
-    this.isAvaible = this.$store.getters['box/isSizeAvailable'](this.size)
-  }
-}
+};
 </script>
 
 <style>
-
 </style>

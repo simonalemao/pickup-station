@@ -1,55 +1,59 @@
 export default class Box {
-  constructor (box) {
+  constructor(box) {
     this.box = box
   }
 
-  getId () {
-    return this.box.id
+  getId() {
+    return this.box.boxID
   }
 
-  getTitle () {
-    return this.box.title
+  getTitle() {
+    return this.box.titel
   }
 
-  getDescription () {
-    return this.box.description
+  getDescription() {
+    return this.box.beschreibung
   }
 
-  setTitle (title) {
-    this.box.title = title
+  setTitle(title) {
+    this.box.titel = title
     return this
   }
 
-  setDescription (description) {
-    this.box.description = description
+  setDescription(description) {
+    this.box.beschreibung = description
     return this
   }
 
-  getSize () {
-    return this.box.size
+  getSize() {
+    return this.box.groesse
   }
 
-  getCreatedAt () {
-    return this.box.created_at
+  getCreatedAt() {
+    return this.box.erstellt
   }
 
-  getLastOpenedAt () {
-    return this.box.last_opened_at
+  getLastOpenedAt() {
+    return this.box.geoeffnet
   }
 
-  getState () {
-    return this.box.state
+  getState() {
+    return this.box.offen
   }
 
-  isOpen () {
-    return this.box.state === 1
+  getType() {
+    return this.box.typ
   }
 
-  isLocked () {
-    return this.box.state === 0
+  isOpen() {
+    return this.box.offen == 1
   }
 
-  toJson () {
+  isLocked() {
+    return this.box.offen == 0
+  }
+
+  toJson() {
     return this.box
   }
 }

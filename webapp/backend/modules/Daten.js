@@ -1,237 +1,163 @@
-const { writeFileSync, readFileSync } = require('fs')
-
-const path = "daten.json";
-const leereDaten = {
-   "boxen": {
-      "1": {
-         "id": 1,
-         "title": "",
-         "description": "",
-         "size": "S",
-         "created_at": "",
-         "last_opened_at": "",
-         "state": 0 // 1 = offen
-      }
-   },
-   "belegte": []
-}
+const mysql = require('mysql');
 
 export class Daten {
-   #daten;
-   #arduino;
-
    constructor() {
-      this.#daten = this.#readFromFile();
-      this.#arduino = new (require('./Arduino.js').Arduino)();
-   }
+      this.arduino = new (require('./Devuino.js').Arduino)();
 
-   async getBelegteBoxen() {
-      var res = [];
-
-      var boxen = this.#get("boxen");
-
-      this.#get("belegte").forEach(belegt => {
-         res.push(boxen[belegt]);
+      this.con = mysql.createConnection({
+         host: "localhost",
+         user: "www-pickup-station",
+         password: "Rasputin",
+         database: "pickup-station"
       });
 
-      return JSON.stringify(res);
-   }
-
-   async open(id) {
-      var boxen = this.#get("boxen");
-
-      var isOpen = false;
-      var tryCount = 5;
-      boxen[`${id}`]["last_opened_at"] = this.#currentTime();
-      this.#set({ "boxen": boxen });
-
-      while (!isOpen && tryCount >= 0) {
-         try {
-            await this.#arduino.open(id);
-            isOpen = true;
-
-            boxen[`${id}`]["last_opened_at"] = this.#currentTime();
-            this.#set({ "boxen": boxen });
-         } catch (error) {
-            if (error == "arduIP == null") {
-               tryCount--;
-               this.#arduino.arduIpErneuern();
-            } else if (error == "timeout") {
-               tryCount--;
-               this.#arduino.arduIpErneuern();
-            } else if (error == "other error") {
-               tryCount = -1;
-            }
-         }
-      }
-   }
-
-   async getBox(id) {
-      var arduStat;
-
-      var tryCount = 2;
-      while (arduStat == undefined) {
-         try {
-            arduStat = await this.#arduino.getStatus();
-         } catch (error) {
-            if (error == "arduIP == null") {
-               tryCount--;
-               this.#arduino.arduIpErneuern();
-            } else if (error == "timeout") {
-               tryCount--;
-               this.#arduino.arduIpErneuern();
-            } else if (error == "other error") {
-               tryCount = 0;
-            }
-
-            if (tryCount == 0) {
-               // zurückgeben, dass alle Fächer geschlossen sind.
-               arduStat = "[";
-               Object.keys(this.#get("boxen")).forEach(box => {
-                  arduStat += "0,";
-               });
-               arduStat += "0]";
-            }
-         }
-      }
-
-      arduStat = JSON.parse(arduStat);
-
-      var box = this.#get("boxen")[`${id}`]
-
-      box["state"] = arduStat[id - 1];
-
-      return JSON.stringify(box);
-   }
-
-   async boxFreigeben(id) {
-      var belegteNeu = [];
-
-      this.#get("belegte").forEach(belegtAlt => {
-         if (belegtAlt != `${id}`) {
-            belegteNeu.push(`${id}`);
-         }
+      this.con.connect((err) => {
+         if (err) {
+            console.error(err);
+         };
       });
-
-      this.#set({ "belegte": belegteNeu });
-
-      this.#arduino.freigeben(id);
-      this.#arduino.getStatus();
    }
 
-   async getVerfuegbare() {
-      var boxen = this.#get("boxen");
+   setArduIp(ip) {
+      this.arduino.setIp(ip);
+   }
 
-      var verf = {
-         "S": false,
-         "M": false,
-         "L": false
-      }
-
-      var belegte = this.#get("belegte");
-
-      Object.keys(boxen).forEach(boxStr => {
-         if (belegte.indexOf(`${boxen[boxStr].id}`) == -1) {
-            verf[boxen[boxStr].size] = true;
+   getBelegteBoxen(Response) {
+      this.con.query("SELECT * FROM boxen WHERE belegt = 1", (err, rows) => {
+         if (err) {
+            console.error(err)
+            Response.end("null")
+         } else {
+            Response.end(JSON.stringify(rows))
          }
+
       })
-
-      return JSON.stringify(verf);
    }
 
-   async getBoxMitGroesse(groesse) {
-      // Daten zum ermittel "getten"
-      var boxen = this.#get("boxen");
-      var belegte = this.#get("belegte");
+   getArduinoAvailability(Response) {
+      this.arduino.getAvailability(Response)
+   }
 
-      // leere Box für Antwort auf Anfrage
-      var resBox;
+   open(res, boxID) {
+      this.arduino.open(boxID).then(
+         this.con.query(`UPDATE boxen SET geoeffnet = '${this.#currentTime()}' WHERE boxID = ${boxID}`, (err, rows) => {
+            if (err) { console.error(err); }
+            res?.end()
+         })
+      )
+   }
 
-      // Nach einer unbenutzten Box suchen
-      Object.keys(boxen).forEach(boxStr => {
-         if ((belegte.indexOf(`${boxen[boxStr].id}`) == -1) && boxen[boxStr].size == groesse) {
-            resBox = boxen[boxStr];
-         }
+   getBox(Response, boxID) {
+      this.arduino.getStatus().then((arduStatus) => {
+         this.con.query(`SELECT * FROM boxen WHERE boxID = ${boxID}`, (err, rows) => {
+            if (err) {
+               console.error(err);
+               Response.end("null")
+            } else {
+               let arduStat = JSON.parse(arduStatus);
+
+               Response.end(JSON.stringify({
+                  ...(rows[0]),
+                  offen: arduStat[boxID - 1]
+               }))
+            }
+         })
       })
-
-      // Infos für zurückzugebende Box ändern
-      resBox.created_at = this.#currentTime();
-      resBox.last_opened_at = this.#currentTime();
-      resBox.title = "Kein Titel vorhanden";
-      resBox.description = "Keine Beschreibung vorhanden.";
-
-      // Zurückzugebende Box in Datenset speichern
-      boxen[`${resBox.id}`] = resBox;
-      // Box als belegt speichern
-      belegte.push(`${resBox.id}`);
-
-      // Daten speichern (& in Datei schreiben)
-      this.#set({ "boxen": boxen });
-      this.#set({ "belegte": belegte });
-
-      // Box zurückgeben
-      return resBox;
    }
 
-   async update(payloadStr) {
-      var pl = JSON.parse(payloadStr);
-      var boxen = this.#get("boxen");
-
-      boxen[`${pl.boxId}`]["title"] = pl.title;
-      boxen[`${pl.boxId}`]["description"] = pl.description;
-
-      this.#set({ "boxen": boxen });
-
-      return
-   }
-
-   #get(keyStr) {
-      var returnVar = this.#daten[keyStr];
-      return returnVar == undefined ? null : returnVar;
-   }
-
-   #set(obj) {
-      Object.assign(this.#daten, obj);
-      this.#writeToFile();
-   }
-
-   #readFromFile() {
-      var data = leereDaten;
-
-      // readFile(path, 'utf8', (err, fileData) => {
-      //    if (err) {
-      //       if (err.code === "ENOENT") {
-      //          this.#writeToFile();
-      //       } else {
-      //          throw err;
-      //       }
-      //    } else {
-      //       data = JSON.parse(fileData);
-      //    }
-      // })
-
-      try {
-         data = JSON.parse(readFileSync(path, 'utf8'));
-      } catch (error) {
-         if (error.code === "ENOENT") {
-            this.#writeToFile();
+   boxFreigeben(Response, boxID) {
+      this.con.query(`UPDATE boxen SET belegt = 0 WHERE boxID = ${boxID}`
+         , (err, rows) => {
+            if (err) { console.error(err); }
+            Response.end()
          }
-      }
-
-      return data;
+      )
    }
 
-   #writeToFile() {
-      writeFileSync(path, JSON.stringify(this.#daten))
+   getVerfuegbare(Response) {
+      this.con.query("SELECT groesse FROM boxen WHERE belegt = 0 GROUP BY groesse", (err, rows) => {
+         var verf = {
+            S: false,
+            M: false,
+            L: false
+         }
+
+         if (err) {
+            console.error(err)
+         } else {
+            rows.forEach(row => {
+               verf[row.groesse] = true
+            });
+         }
+
+         Response.end(JSON.stringify(verf))
+      })
+   }
+
+   requestAndOpen(Response, groesse) {
+      this.con.query(`SELECT boxID, listID 
+         FROM boxen WHERE 
+         (belegt = 0)
+         AND (groesse = '${groesse}')
+         LIMIT 1`, (err, rows) => {
+         if (err) {
+            console.error(err);
+            Response.end("null");
+         }
+
+         var listID = rows[0].listID
+         var boxID = rows[0].boxID
+
+         // BELEGT = 1 !!
+         this.con.query(`UPDATE boxen SET
+         titel = 'Kein Titel vergeben',
+         beschreibung = 'Keine Beschreibung vergeben',
+         belegt = 0,
+         typ = 'Public',
+         erstellt = '${this.#currentTime()}',
+         geoeffnet = '${this.#currentTime()}',
+         offen = 1
+         WHERE listID = ${listID}`, (err, rows) => {
+            if (err) {
+               console.error(err);
+            }
+
+            this.con.query(`
+            SELECT * FROM boxen WHERE listID = ${listID}`, (err, rows) => {
+               if (err) {
+                  console.error(err);
+               }
+
+               this.arduino.open(boxID).then(
+                  Response.end(JSON.stringify(rows[0]))
+               )
+            })
+         })
+
+      })
+   }
+
+   async update(Response, payload) {
+      this.con.query(
+         `UPDATE boxen SET 
+         titel = ?, 
+         beschreibung = ? 
+         WHERE boxID = ${payload.boxID}`
+         , [payload.titel, payload.beschreibung]
+         , (err, rows) => {
+            if (err) { console.error(err) }
+            Response.end()
+         }
+      )
    }
 
    #currentTime() {
       var date = new Date();
 
-      return `${date.getDate() < 10 ? "0" + date.getDate() : date.getDate()}.`+
-      `${date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1}.`+
-      `${date.getFullYear()} `+
-      `${date.getHours() < 10 ? "0" + date.getHours() : date.getHours()}:`+
-      `${date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes()}`;
+      return `${date.getDate() < 10 ? "0" + date.getDate() : date.getDate()}.` +
+         `${date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1}.` +
+         `${date.getFullYear()} ` +
+         `${date.getHours() < 10 ? "0" + date.getHours() : date.getHours()}:` +
+         `${date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes()}`;
    }
 }

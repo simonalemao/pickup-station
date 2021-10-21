@@ -4,6 +4,8 @@ const querystring = require('querystring');
 const { Daten } = require('./modules/Daten.js');
 const daten = new Daten();
 
+
+
 /**
  * 
  * @param {http.IncomingMessage} req Request
@@ -26,28 +28,32 @@ export default async function (req, res) {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
 
+      console.log("query:", query['f']);
+
       switch (query['f']) {
+         case "get_ardu_availability":
+            daten.getArduinoAvailability(res)
+            break
+         // case "arduip":
+         //    daten.setArduIp(query['ip']);
+         //    break;
          case "get_occupied":
-            res.end(await daten.getBelegteBoxen());
-            break;
+            daten.getBelegteBoxen(res)
+            break
          case "open":
-            await daten.open(query["id"]);
-            res.end()
-            break;
+            daten.open(res, query["id"])
+            break
          case "get_box":
-            res.end(await daten.getBox(query["id"]));
+            daten.getBox(res, query['id']);
             break;
          case "delete":
-            await daten.boxFreigeben(query["id"]);
-            res.end();
+            daten.boxFreigeben(res, query["id"]);
             break;
          case "get_av_sizes":
-            res.end(await daten.getVerfuegbare());
+            daten.getVerfuegbare(res);
             break;
          case "request_and_open":
-            var box = await daten.getBoxMitGroesse(query["size"]);
-            await daten.open(box.id);
-            res.end(JSON.stringify(box));
+            daten.requestAndOpen(res, query["size"])
             break;
          case "update":
             var payload = "";
@@ -57,13 +63,11 @@ export default async function (req, res) {
             })
 
             req.on("end", () => {
-               daten.update(payload);
-               res.end();
+               daten.update(res, JSON.parse(payload));
             })
 
             break;
          default:
-            console.log(query['f']);
             res.end();
             break;
       }
